@@ -121,28 +121,15 @@ function VoidWanderers:MissionUpdate()
 			if actor.Team == CF["PlayerTeam"] then
 				if actor:HasObjectInGroup("Tools - Diggers") and self:IsAlly(actor) then
 					friends = friends + 1
-
 					self:AddObjectivePoint("PROTECT", actor.AboveHUDPos, CF["PlayerTeam"], GameActivity.ARROWDOWN)
-					if actor.AIMode ~= Actor.AIMODE_GOLDDIG then
-						actor.AIMode = Actor.AIMODE_GOLDDIG
-					end
-				end
 
-				-- Don't let the player take over allied crafts
-				if
-					(actor.ClassName == "ACDropShip" or actor.ClassName == "ACRocket") and actor:IsPlayerControlled()
-				then
-					local cont = actor:GetController()
-					actor = ToACraft(actor)
-					if actor:IsInventoryEmpty() then
-						actor:CloseHatch()
-						actor.Vel.Y = math.min(actor.Vel.Y, -self.gravityPerFrame.Y - 1)
-					else
-						actor.Vel.Y = math.max(actor.Vel.Y, self.gravityPerFrame.Y + 1)
+					if not IsACraft(actor) then
+						actor.AIMode = Actor.AIMODE_GOLDDIG
 					end
 				end
 			elseif actor.Team == CF["CPUTeam"] then
 				enemies = enemies + 1
+
 				if actor.ClassName == "AHuman" or actor.ClassName == "ACrab" then
 					CF["HuntForActors"](actor, CF["PlayerTeam"])
 				end

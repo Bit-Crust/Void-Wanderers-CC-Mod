@@ -902,15 +902,15 @@ do
 		for i, line in pairs(lines) do
 			local offset = offsets[i] + alignmentOffset;
 				-- + Vector(0, lineOffset * (1 - math.cos(rotation)) / 2);
-			PrimitiveMan:DrawTextPrimitive(player, pos + offset:RadRotate(rotation), line, smallFont, halignment, rotation);
+			PrimitiveMan:DrawTextPrimitive(player, (pos + offset:RadRotate(rotation)).Rounded, line, smallFont, halignment, rotation);
 		end
 
 		for i, icon in pairs(icons) do
 			local offset = Vector(iconOffsets[i].X - lineWidths[iconFromLine[i]] * halignment / 2, iconOffsets[i].Y) + alignmentOffset;
 			if CF.FontIcons[icon] then
-				PrimitiveMan:DrawBitmapPrimitive(player, pos + offset:RadRotate(rotation), CF.FontIcons[icon], rotation, false, false);
+				PrimitiveMan:DrawBitmapPrimitive(player, (pos + offset:RadRotate(rotation)).Rounded, CF.FontIcons[icon], rotation, false, false);
 			elseif CF.FontGlows[icon] then
-				PrimitiveMan:DrawBitmapPrimitive(player, pos + offset:RadRotate(rotation), CF.FontGlows[icon], rotation, false, false);
+				PrimitiveMan:DrawBitmapPrimitive(player, (pos + offset:RadRotate(rotation)).Rounded, CF.FontGlows[icon], rotation, false, false);
 			end
 		end
 
@@ -1104,7 +1104,7 @@ do
 		end
 
 		if el.Text then
-			CF.DrawString(el.Text, el.Pos, w, h, nil, nil, el.Centered and 1 or 0, el.Centered and 1 or 0, nil, player);
+			CF.DrawString(el.Text, el.Pos - Vector(0, 1), w, h, el.SmallFont, nil, el.Centered and 1 or 0, el.Centered and 1 or 0, nil, player);
 		end
 	end
 	-----------------------------------------------------------------------
@@ -1131,7 +1131,7 @@ do
 		end
 
 		if el.Text then
-			CF.DrawString(el.Text, el.Pos, el.Width - 6, el.Height - 6, nil, nil, 1, 1, nil, player);
+			CF.DrawString(el.Text, el.Pos - Vector(0, 1), el.Width - 6, el.Height - 6, nil, nil, 1, 1, nil, player);
 		end
 	end
 end

@@ -253,13 +253,8 @@ function VoidWanderers:ProcessShipControlPanelUI()
 								self.vesselData.dialogOptionChosen = #self.vesselData.dialog.options
 							end
 
-							if cont:IsState(Controller.WEAPON_FIRE) then
-								if not self.firePressed[player] then
-									self.firePressed[player] = true;
-									self.vesselData.dialogOptionChosen = self.vesselData.dialogOptionSelected;
-								end
-							else
-								self.firePressed[player] = false;
+							if self.firePressState[player] == self.pressStates.FRESH then
+								self.vesselData.dialogOptionChosen = self.vesselData.dialogOptionSelected;
 							end
 						end
 
@@ -315,28 +310,22 @@ function VoidWanderers:ProcessShipControlPanelUI()
 
 					local selectedLocation = locations[self.ShipControlSelectedLocation];
 
-					if cont:IsState(Controller.WEAPON_FIRE) then
-						if not self.firePressed[player] then
-							self.firePressed[player] = true;
-
-							if not self.encounterData.initialized then
-								if self.GS["Location"] == nil then
-									if self.GS["ShipX"] == nil or self.GS["ShipY"] == nil then
-										self:SetRandomOrbitLocation();
-									end
+					if self.firePressState[player] == self.pressStates.FRESH then
+						if not self.encounterData.initialized then
+							if self.GS["Location"] == nil then
+								if self.GS["ShipX"] == nil or self.GS["ShipY"] == nil then
+									self:SetRandomOrbitLocation();
 								end
-
-								self.GS["Location"] = nil;
-								self.GS["Destination"] = selectedLocation;
-								local destpos = CF.LocationPos[self.GS["Destination"]] or Vector();
-								self.GS["DestX"] = tonumber(math.floor(destpos.X));
-								self.GS["DestY"] = tonumber(math.floor(destpos.Y));
-
-								self.GS["Distance"] = CF.Dist(Vector(tonumber(self.GS["ShipX"]), tonumber(self.GS["ShipY"])), destpos);
 							end
+
+							self.GS["Location"] = nil;
+							self.GS["Destination"] = selectedLocation;
+							local destpos = CF.LocationPos[self.GS["Destination"]] or Vector();
+							self.GS["DestX"] = tonumber(math.floor(destpos.X));
+							self.GS["DestY"] = tonumber(math.floor(destpos.Y));
+
+							self.GS["Distance"] = CF.Dist(Vector(tonumber(self.GS["ShipX"]), tonumber(self.GS["ShipY"])), destpos);
 						end
-					else
-						self.firePressed[player] = false;
 					end
 
 					local locationListStart = self.ShipControlSelectedLocation - (self.ShipControlSelectedLocation - 1) % self.ShipControlLocationsPerPage;
@@ -511,25 +500,19 @@ function VoidWanderers:ProcessShipControlPanelUI()
 						end
 					end
 
-					if cont:IsState(Controller.WEAPON_FIRE) then
-						if not self.firePressed[player] then
-							self.firePressed[player] = true;
+					if self.firePressState[player] == self.pressStates.FRESH then
+						if not self.encounterData.initialized then
+							-- Travel to another planet
+							self.GS["Planet"] = planets[planetSelected];
+							self.GS["Location"] = nil;
+							self.GS["Destination"] = nil;
 
-							if not self.encounterData.initialized then
-								-- Travel to another planet
-								self.GS["Planet"] = planets[planetSelected];
-								self.GS["Location"] = nil;
-								self.GS["Destination"] = nil;
+							self.GS["DestX"] = nil;
+							self.GS["DestY"] = nil;
 
-								self.GS["DestX"] = nil;
-								self.GS["DestY"] = nil;
-
-								self:SetRandomOrbitLocation();
-								self.ShipControlSelectedLocation = 1;
-							end
+							self:SetRandomOrbitLocation();
+							self.ShipControlSelectedLocation = 1;
 						end
-					else
-						self.firePressed[player] = false;
 					end
 
 					local planetListStart = planetSelected - (planetSelected - 1) % self.ShipControlPlanetsPerPage;
@@ -634,55 +617,48 @@ function VoidWanderers:ProcessShipControlPanelUI()
 						end
 					end
 
-					if cont:IsState(Controller.WEAPON_FIRE) then
-						if not self.firePressed[player] then
-							self.firePressed[player] = true
+					if self.firePressState[player] == self.pressStates.FRESH then
+						-- Find planet where mission is
+						local planet = CF.LocationPlanet[missions[missionSelected].Location]
 
-							-- Find planet where mission is
-							local planet =
-								CF.LocationPlanet[missions[missionSelected].Location]
-
-							if self.GS["Planet"] ~= planet then
-								-- Move to planet if we're not there
-								self.GS["Planet"] = planet
-								self.GS["Location"] = nil
-								self.GS["Destination"] = nil
-
-								self:SetRandomOrbitLocation()
-								-- Recreate all lists
-								resetLists = true
-							end
-
-							if self.GS["Location"] ~= nil then
-								local locpos = CF.LocationPos[self.GS["Location"]] or Vector()
-
-								self.GS["ShipX"] = math.floor(locpos.X)
-								self.GS["ShipY"] = math.floor(locpos.Y)
-							else
-								if self.GS["ShipX"] == nil or self.GS["ShipY"] == nil then
-									self:SetRandomOrbitLocation()
-								end
-							end
-
-							-- Fly to location
+						if self.GS["Planet"] ~= planet then
+							-- Move to planet if we're not there
+							self.GS["Planet"] = planet
 							self.GS["Location"] = nil
-							self.GS["Destination"] = missions[missionSelected].Location
+							self.GS["Destination"] = nil
 
-							local destpos = CF.LocationPos[self.GS["Destination"]] or Vector()
-
-							self.GS["DestX"] = math.floor(destpos.X)
-							self.GS["DestY"] = math.floor(destpos.Y)
-
-							self.GS["Distance"] = CF.Dist(
-								Vector(tonumber(self.GS["ShipX"]), tonumber(self.GS["ShipY"])),
-								Vector(tonumber(self.GS["DestX"]), tonumber(self.GS["DestY"]))
-							)
-
-							self.ShipControlMode = self.ShipControlPanelModes.LOCATION
-							self.SetDestination = self.GS["Destination"]
+							self:SetRandomOrbitLocation()
+							-- Recreate all lists
+							resetLists = true
 						end
-					else
-						self.firePressed[player] = false
+
+						if self.GS["Location"] ~= nil then
+							local locpos = CF.LocationPos[self.GS["Location"]] or Vector()
+
+							self.GS["ShipX"] = math.floor(locpos.X)
+							self.GS["ShipY"] = math.floor(locpos.Y)
+						else
+							if self.GS["ShipX"] == nil or self.GS["ShipY"] == nil then
+								self:SetRandomOrbitLocation()
+							end
+						end
+
+						-- Fly to location
+						self.GS["Location"] = nil
+						self.GS["Destination"] = missions[missionSelected].Location
+
+						local destpos = CF.LocationPos[self.GS["Destination"]] or Vector()
+
+						self.GS["DestX"] = math.floor(destpos.X)
+						self.GS["DestY"] = math.floor(destpos.Y)
+
+						self.GS["Distance"] = CF.Dist(
+							Vector(tonumber(self.GS["ShipX"]), tonumber(self.GS["ShipY"])),
+							Vector(tonumber(self.GS["DestX"]), tonumber(self.GS["DestY"]))
+						)
+
+						self.ShipControlMode = self.ShipControlPanelModes.LOCATION
+						self.SetDestination = self.GS["Destination"]
 					end
 					
 					local mission = missions[missionSelected];
@@ -893,17 +869,11 @@ function VoidWanderers:ProcessShipControlPanelUI()
 						local price = skills[selectedSkill].Price;
 						local sklpts = tonumber(self.GS["Brain" .. player .. "SkillPoints"]);
 
-						if cont:IsState(Controller.WEAPON_FIRE) then
-							if not self.firePressed[player] then
-								self.firePressed[player] = true;
-
-								if current < maximum and price <= sklpts then
-									self.GS[skills[selectedSkill].Variable] = current + 1;
-									self.GS["Brain" .. player .. "SkillPoints"] = sklpts - price;
-								end
+						if self.firePressState[player] == self.pressStates.FRESH then
+							if current < maximum and price <= sklpts then
+								self.GS[skills[selectedSkill].Variable] = current + 1;
+								self.GS["Brain" .. player .. "SkillPoints"] = sklpts - price;
 							end
-						else
-							self.firePressed[player] = false;
 						end
 
 						lineOffset = topOfPage;
@@ -911,11 +881,7 @@ function VoidWanderers:ProcessShipControlPanelUI()
 						CF.DrawString(self.GS["Brain" .. player .. "Exp"] .. " / 250 EXP", pos + Vector(-3, lineOffset), 270, 11, nil, nil, 2);
 						lineOffset = lineOffset + 16;
 
-						if price > sklpts then
-							if tonumber(self.GS["Time"]) % 2 == 0 then
-								CF.DrawString("POINTS: " .. sklpts, pos + Vector(-70, lineOffset), 270, 11, nil, nil, 1);
-							end
-						else
+						if price <= sklpts or tonumber(self.GS["Time"]) % 2 == 0 then
 							CF.DrawString("POINTS: " .. sklpts, pos + Vector(-70, lineOffset), 270, 11, nil, nil, 1);
 						end
 						lineOffset = lineOffset + 17;
@@ -1065,22 +1031,16 @@ function VoidWanderers:ProcessShipControlPanelUI()
 					local amount = math.min(maximum - current, bundle);
 					local price = upgrades[selectedUpgrade].Price * amount;
 
-					if cont:IsState(Controller.WEAPON_FIRE) then
-						if not self.firePressed[player] then
-							self.firePressed[player] = true;
+					if self.firePressState[player] == self.pressStates.FRESH then
+						if current < maximum and price <= CF.GetPlayerGold(self.GS, 0) then
+							self.GS[upgrades[selectedUpgrade].Variable] = current + amount;
+							CF.ChangePlayerGold(self.GS, -price);
 
-							if current < maximum and price <= CF.GetPlayerGold(self.GS, 0) then
-								self.GS[upgrades[selectedUpgrade].Variable] = current + amount;
-								CF.ChangePlayerGold(self.GS, -price);
-
-								-- Re-init turrets panels to add new turrets to ship
-								if selectedUpgrade == 6 then
-									self:InitTurretsControlPanelUI();
-								end
+							-- Re-init turrets panels to add new turrets to ship
+							if selectedUpgrade == 6 then
+								self:InitTurretsControlPanelUI();
 							end
 						end
-					else
-						self.firePressed[player] = false;
 					end
 
 					lineOffset = topOfPage;
@@ -1202,71 +1162,65 @@ function VoidWanderers:ProcessShipControlPanelUI()
 
 					total = price + installFee - tradeInDeduction;
 
-					if cont:IsState(Controller.WEAPON_FIRE) then
-						if not self.firePressed[player] then
-							self.firePressed[player] = true
+					if self.firePressState[player] == self.pressStates.FRESH then
+						local ok = true
 
-							local ok = true
-
-							if CF.CountUsedClonesInArray(self.Clones) > actcryo then
-								self.ShipControlMessageTime = tonumber(self.GS["Time"])
-								self.ShipControlMessageText = "Not enough storage to transfer clones"
-								ok = false
-							end
-
-							if CF.CountUsedStorageInArray(self.StorageItems) > actstor then
-								self.ShipControlMessageTime = tonumber(self.GS["Time"])
-								self.ShipControlMessageText = "Not enough storage to transfer items"
-								ok = false
-							end
-
-							if CF.GetPlayerGold(self.GS, 0) < total then
-								self.ShipControlMessageTime = tonumber(self.GS["Time"])
-								self.ShipControlMessageText = "Not enough gold"
-								ok = false
-							end
-
-							if ok then
-								-- Pay
-								CF.ChangePlayerGold(self.GS, -total)
-
-								-- Clear turrets pos
-								local count = tonumber(self.GS["PlayerVesselTurrets"])
-								for i = 1, count do
-									self.GS["Actors - Turret" .. i .. "X"] = nil
-									self.GS["Actors - Turret" .. i .. "Y"] = nil
-								end
-
-								-- Assign new ship
-								self.GS["PlayerVessel"] = id;
-
-								self.GS["PlayerVesselStorageCapacity"] = actstor;
-								self.GS["PlayerVesselClonesCapacity"] = actcryo;
-								self.GS["PlayerVesselLifeSupport"] = actlife;
-								self.GS["PlayerVesselCommunication"] = actcomm;
-								self.GS["PlayerVesselSpeed"] = actengn;
-								self.GS["PlayerVesselTurrets"] = actturr;
-								self.GS["PlayerVesselTurretStorage"] = actturs;
-								self.GS["PlayerVesselBombBays"] = actbmbb;
-								self.GS["PlayerVesselBombStorage"] = actbmbs;
-								
-								self.GS["Scene"] = CF.VesselScene[self.GS["PlayerVessel"]];
-								self:DestroyConsoles();
-								local actors = {};
-
-								for actor in MovableMan.Actors do
-									if actor.PresetName ~= "Brain Case" and (actor.ClassName == "AHuman" or actor.ClassName == "ACrab") then
-										table.insert(actors, actor);
-									end
-								end
-
-								self.sceneToLaunch = self.GS["Scene"];
-								self.scriptToLaunch = "Tactics.lua";
-								self.onboardToSerialize = actors;
-							end
+						if CF.CountUsedClonesInArray(self.Clones) > actcryo then
+							self.ShipControlMessageTime = tonumber(self.GS["Time"])
+							self.ShipControlMessageText = "Not enough storage to transfer clones"
+							ok = false
 						end
-					else
-						self.firePressed[player] = false
+
+						if CF.CountUsedStorageInArray(self.StorageItems) > actstor then
+							self.ShipControlMessageTime = tonumber(self.GS["Time"])
+							self.ShipControlMessageText = "Not enough storage to transfer items"
+							ok = false
+						end
+
+						if CF.GetPlayerGold(self.GS, 0) < total then
+							self.ShipControlMessageTime = tonumber(self.GS["Time"])
+							self.ShipControlMessageText = "Not enough gold"
+							ok = false
+						end
+
+						if ok then
+							-- Pay
+							CF.ChangePlayerGold(self.GS, -total)
+
+							-- Clear turrets pos
+							local count = tonumber(self.GS["PlayerVesselTurrets"])
+							for i = 1, count do
+								self.GS["Actors - Turret" .. i .. "X"] = nil
+								self.GS["Actors - Turret" .. i .. "Y"] = nil
+							end
+
+							-- Assign new ship
+							self.GS["PlayerVessel"] = id;
+
+							self.GS["PlayerVesselStorageCapacity"] = actstor;
+							self.GS["PlayerVesselClonesCapacity"] = actcryo;
+							self.GS["PlayerVesselLifeSupport"] = actlife;
+							self.GS["PlayerVesselCommunication"] = actcomm;
+							self.GS["PlayerVesselSpeed"] = actengn;
+							self.GS["PlayerVesselTurrets"] = actturr;
+							self.GS["PlayerVesselTurretStorage"] = actturs;
+							self.GS["PlayerVesselBombBays"] = actbmbb;
+							self.GS["PlayerVesselBombStorage"] = actbmbs;
+							
+							self.GS["Scene"] = CF.VesselScene[self.GS["PlayerVessel"]];
+							self:DestroyConsoles();
+							local actors = {};
+
+							for actor in MovableMan.Actors do
+								if actor.PresetName ~= "Brain Case" and (actor.ClassName == "AHuman" or actor.ClassName == "ACrab") then
+									table.insert(actors, actor);
+								end
+							end
+
+							self.sceneToLaunch = self.GS["Scene"];
+							self.scriptToLaunch = "Tactics.lua";
+							self.onboardToSerialize = actors;
+						end
 					end
 
 					lineOffset = topOfPage;

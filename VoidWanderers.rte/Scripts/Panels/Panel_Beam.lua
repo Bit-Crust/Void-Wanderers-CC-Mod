@@ -157,68 +157,62 @@ function VoidWanderers:ProcessBeamControlPanelUI()
 				end
 
 				-- Deploy units
-				if cont:IsState(Controller.WEAPON_FIRE) and canbeam then
-					if not self.firePressed[player] then
-						self.firePressed[player] = true;
+				if self.firePressState[player] == self.pressStates.FRESH and canbeam then
+					-- Save ground items
+					storageCapacity = tonumber(self.GS["PlayerVesselStorageCapacity"]);
+					for item in MovableMan.Items do
+						if IsHeldDevice(item) and not ToHeldDevice(item).UnPickupable then
+							local count = CF.CountUsedStorageInArray(self.StorageItems);
 
-						-- Save ground items
-						storageCapacity = tonumber(self.GS["PlayerVesselStorageCapacity"]);
-						for item in MovableMan.Items do
-							if IsHeldDevice(item) and not ToHeldDevice(item).UnPickupable then
-								local count = CF.CountUsedStorageInArray(self.StorageItems);
-
-								if count < storageCapacity then
-									CF.PutItemToStorageArray(self.StorageItems, item.PresetName, item.ClassName, item.ModuleName);
-								else
-									break;
-								end
+							if count < storageCapacity then
+								CF.PutItemToStorageArray(self.StorageItems, item.PresetName, item.ClassName, item.ModuleName);
+							else
+								break;
 							end
 						end
-
-						CF.SetStorageArray(self.GS, self.StorageItems);
-
-						-- Clean previously saved actors and inventories in config
-						CF.ClearDeployed(self.GS);
-						CF.ClearOnboard(self.GS);
-
-						local deployed = {};
-						local onboard = {};
-
-						-- Save actors to config and transfer them to scene
-						for _, set in pairs{MovableMan.Actors, MovableMan.Particles} do
-							for actor in set do
-								if
-									actor.GetsHitByMOs
-									and actor.PresetName ~= "Brain Case"
-									and (actor.ClassName == "AHuman" or actor.ClassName == "ACrab")
-									and actor.Team == Activity.TEAM_1
-								then
-									if self.BeamControlPanelBox:IsWithinBox(actor.Pos) then
-										table.insert(deployed, actor);
-									else
-										table.insert(onboard, actor);
-									end
-								end
-							end
-						end
-
-						self.deploymentToSerialize = deployed;
-						self.onboardToSerialize = onboard;
-						local locationScenes = CF.LocationScenes[locationID];
-						local scene = locationScenes[math.random(#locationScenes)];
-
-						-- Set new operating mode
-						self.GS["BrainsOnMission"] = brainCount == self.PlayerCount and "True" or "False";
-						self.GS["Mode"] = "Mission";
-						self.GS["Scene"] = scene;
-						self:saveCurrentGameState(self.GS);
-						self:DestroyConsoles();
-						
-						self.sceneToLaunch = self.GS["Scene"];
-						self.scriptToLaunch = "Tactics.lua";
 					end
-				else
-					self.firePressed[player] = false
+
+					CF.SetStorageArray(self.GS, self.StorageItems);
+
+					-- Clean previously saved actors and inventories in config
+					CF.ClearDeployed(self.GS);
+					CF.ClearOnboard(self.GS);
+
+					local deployed = {};
+					local onboard = {};
+
+					-- Save actors to config and transfer them to scene
+					for _, set in pairs{MovableMan.Actors, MovableMan.Particles} do
+						for actor in set do
+							if
+								actor.GetsHitByMOs
+								and actor.PresetName ~= "Brain Case"
+								and (actor.ClassName == "AHuman" or actor.ClassName == "ACrab")
+								and actor.Team == Activity.TEAM_1
+							then
+								if self.BeamControlPanelBox:IsWithinBox(actor.Pos) then
+									table.insert(deployed, actor);
+								else
+									table.insert(onboard, actor);
+								end
+							end
+						end
+					end
+
+					self.deploymentToSerialize = deployed;
+					self.onboardToSerialize = onboard;
+					local locationScenes = CF.LocationScenes[locationID];
+					local scene = locationScenes[math.random(#locationScenes)];
+
+					-- Set new operating mode
+					self.GS["BrainsOnMission"] = brainCount == self.PlayerCount and "True" or "False";
+					self.GS["Mode"] = "Mission";
+					self.GS["Scene"] = scene;
+					self:saveCurrentGameState(self.GS);
+					self:DestroyConsoles();
+					
+					self.sceneToLaunch = self.GS["Scene"];
+					self.scriptToLaunch = "Tactics.lua";
 				end
 
 				-- Draw background

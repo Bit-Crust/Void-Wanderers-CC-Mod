@@ -245,65 +245,59 @@ function VoidWanderers:ProcessStorageControlPanelUI()
 				end
 
 				-- Dispense/sell/dump items
-				if cont:IsState(Controller.WEAPON_FIRE) then
-					if not self.firePressed[player] then
-						self.firePressed[player] = true;
+				if self.firePressState[player] == self.pressStates.FRESH then
+					local index = self.StorageFilters[mode][itemSelected];
+					local item = self.StorageItems[index];
 
-						local index = self.StorageFilters[mode][itemSelected];
-						local item = self.StorageItems[index];
+					if item then
+						if not discarding then
+							local foundActor = nil;
 
-						if item then
-							if not discarding then
-								local foundActor = nil;
+							for actor in MovableMan.Actors do
+								local closeEnough = CF.Dist(actor.Pos, self.StorageInputBox.Center) < self.StorageInputRange;
 
-								for actor in MovableMan.Actors do
-									local closeEnough = CF.Dist(actor.Pos, self.StorageInputBox.Center) < self.StorageInputRange;
-
-									if closeEnough and actor.ClassName == "AHuman" then
-										foundActor = actor;
-										break;
-									end
-								end
-
-								local item = CF.MakeItem(item.Class, item.Preset, item.Module);
-
-								if item ~= nil then
-									if foundActor then
-										foundActor:AddInventoryItem(item);
-										foundActor:FlashWhite(100);
-									else
-										item.Pos = self.StorageInputBox.Center;
-										MovableMan:AddItem(item);
-									end
-								end
-							else
-								if selling then
-									local sellCoeff = blackMarket and math.sqrt(CF.SellPriceCoeff) or CF.SellPriceCoeff;
-									local price;
-									local f, i = CF.FindItemInFactions(item.Preset, item.Class or "HDFirearm");
-
-									if f and i then
-										price = math.floor(CF.ItmPrices[f][i] * sellCoeff);
-									else
-										price = math.floor(CF.UnknownItemPrice * sellCoeff);
-									end
-									
-									CF.ChangePlayerGold(self.GS, price);
+								if closeEnough and actor.ClassName == "AHuman" then
+									foundActor = actor;
+									break;
 								end
 							end
 
-							item.Count = item.Count - 1;
-							CF.SetStorageArray(self.GS, self.StorageItems);
-							if item.Count == 0 then
-								self.StorageItems, self.StorageFilters = CF.GetStorageArray(self.GS, true);
+							local item = CF.MakeItem(item.Class, item.Preset, item.Module);
+
+							if item ~= nil then
+								if foundActor then
+									foundActor:AddInventoryItem(item);
+									foundActor:FlashWhite(100);
+								else
+									item.Pos = self.StorageInputBox.Center;
+									MovableMan:AddItem(item);
+								end
 							end
 						else
-							self.StorageControlMessageText = "No item to dispense.";
-							self.StorageControlMessageTime = tonumber(self.GS["Time"]);
+							if selling then
+								local sellCoeff = blackMarket and math.sqrt(CF.SellPriceCoeff) or CF.SellPriceCoeff;
+								local price;
+								local f, i = CF.FindItemInFactions(item.Preset, item.Class or "HDFirearm");
+
+								if f and i then
+									price = math.floor(CF.ItmPrices[f][i] * sellCoeff);
+								else
+									price = math.floor(CF.UnknownItemPrice * sellCoeff);
+								end
+								
+								CF.ChangePlayerGold(self.GS, price);
+							end
 						end
+
+						item.Count = item.Count - 1;
+						CF.SetStorageArray(self.GS, self.StorageItems);
+						if item.Count == 0 then
+							self.StorageItems, self.StorageFilters = CF.GetStorageArray(self.GS, true);
+						end
+					else
+						self.StorageControlMessageText = "No item to dispense.";
+						self.StorageControlMessageTime = tonumber(self.GS["Time"]);
 					end
-				else
-					self.firePressed[player] = false
 				end
 				
 				local lineOffset = topOfPage;

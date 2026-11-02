@@ -27,16 +27,16 @@ function VoidWanderers:StartSceneProcess()
 		end
 	end
 
-	self.mid = Vector(SceneMan.Scene.Width / 4, SceneMan.Scene.Height / 2);
-	self.res = Vector(FrameMan.PlayerScreenWidth, FrameMan.PlayerScreenHeight);
+	self.center = Vector(SceneMan.Scene.Width / 4, SceneMan.Scene.Height / 2);
+	self.resolution = Vector(FrameMan.PlayerScreenWidth, FrameMan.PlayerScreenHeight);
 
 	self.mouse = Vector();
-	self.scroll = self.mid * 1;
+	self.scroll = self.center * 1;
 	self.cursor = self.mouse + self.scroll; 
 
 	self.scrollingScreen = { X = false, Y = false };
-	self.screen = Box(-self.res.X / 2, -self.res.Y / 2, self.res.X / 2, self.res.Y / 2);
-	self.bound = Box(self.mid.X, self.mid.Y, self.mid.X, self.mid.Y);
+	self.screen = Box(-self.resolution.X / 2, -self.resolution.Y / 2, self.resolution.X / 2, self.resolution.Y / 2);
+	self.bound = Box(self.center.X, self.center.Y, self.center.X, self.center.Y);
 
 	for player = Activity.PLAYER_NONE + 1, Activity.MAXPLAYERCOUNT - 1 do
 		self:SetPlayerBrain(nil, player);
@@ -45,10 +45,10 @@ function VoidWanderers:StartSceneProcess()
 	end
 
 	self.camOffset = {
-		[0] = self.mid,
-		[1] = self.mid + Vector(self.mid.X * 2, -self.mid.Y / 2),
-		[2] = self.mid + Vector(self.mid.X * 2, 0),
-		[3] = self.mid + Vector(self.mid.X * 2, self.mid.Y / 2),
+		[0] = self.center,
+		[1] = self.center + Vector(self.center.X * 2, -self.center.Y / 2),
+		[2] = self.center + Vector(self.center.X * 2, 0),
+		[3] = self.center + Vector(self.center.X * 2, self.center.Y / 2),
 	};
 
 	self.mouseFirePressed = false;
@@ -78,9 +78,11 @@ function VoidWanderers:UpdateSceneProcess()
 
 		if screen ~= self.screens.SCREEN_NONE then
 			if screen == self.screens.SCREEN_ONE then
-				CameraMan:SetOffset(self.scroll - self.res / 2, screen);
+				CameraMan:SetOffset(self.scroll - self.resolution / 2, screen);
+				CameraMan:SetScrollTarget(self.scroll, 1, screen);
 			else
-				CameraMan:SetOffset(self.camOffset[screen] - self.res / 2, screen);
+				CameraMan:SetOffset(self.camOffset[screen] - self.resolution / 2, screen);
+				CameraMan:SetScrollTarget(self.camOffset[screen], 1, screen);
 			end
 		end
 	end
@@ -236,8 +238,6 @@ function VoidWanderers:UpdateSceneProcess()
 	self.hoverOverIndex = hoverOverIndex;
 	self.pressHoldIndex = pressHoldIndex;
 	self.pressStartIndex = pressStartIndex;
-	
-	self.form:Update(self, self);
 
 	for i = 1, #self.ui do
 		local element = self.ui[i];
@@ -248,6 +248,8 @@ function VoidWanderers:UpdateSceneProcess()
 			CF.DrawLabel(element);
 		end
 	end
+	
+	self.form:Update(self, self);
 
 	self.form:Draw(self, self);
 

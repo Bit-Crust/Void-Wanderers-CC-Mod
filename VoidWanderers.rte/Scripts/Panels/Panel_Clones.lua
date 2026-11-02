@@ -282,29 +282,23 @@ function VoidWanderers:ProcessClonesControlPanelUI()
 					end
 				end
 
-				if cont:IsState(Controller.WEAPON_FIRE) then
-					if not self.firePressed[player] then
-						self.firePressed[player] = true;
+				if self.firePressState[player] == self.pressStates.FRESH then
+					if cloneSelected ~= 0 then
+						if isSelling then
+							CF.ChangePlayerGold(self.GS, cloneValues[cloneSelected]);
+						end
 
-						if cloneSelected ~= 0 then
-							if isSelling then
-								CF.ChangePlayerGold(self.GS, cloneValues[cloneSelected]);
-							end
+						table.remove(self.Clones, cloneSelected);
+						table.remove(cloneValues, cloneSelected);
+						table.remove(cloneInventoryValues, cloneSelected);
 
-							table.remove(self.Clones, cloneSelected);
-							table.remove(cloneValues, cloneSelected);
-							table.remove(cloneInventoryValues, cloneSelected);
+						-- Update game state data
+						CF.SetClonesArray(self.GS, self.Clones);
 
-							-- Update game state data
-							CF.SetClonesArray(self.GS, self.Clones);
-
-							if cloneSelected > #self.Clones then
-								cloneSelected = #self.Clones;
-							end
+						if cloneSelected > #self.Clones then
+							cloneSelected = #self.Clones;
 						end
 					end
-				else
-					self.firePressed[player] = false;
 				end
 
 				-- Print clone storage capacity
@@ -483,86 +477,80 @@ function VoidWanderers:ProcessClonesControlPanelUI()
 					cloneSelected = 1;
 				end
 
-				if cont:IsState(Controller.WEAPON_FIRE) then
-					if not self.firePressed[player] then
-						self.firePressed[player] = true;
+				if self.firePressState[player] == self.pressStates.FRESH then
+					if #self.Clones ~= 0 then
+						if CF.CountActors(CF.PlayerTeam) < tonumber(self.GS["PlayerVesselLifeSupport"]) then
+							local clone = self.Clones[cloneSelected];
 
-						if #self.Clones ~= 0 then
-							if CF.CountActors(CF.PlayerTeam) < tonumber(self.GS["PlayerVesselLifeSupport"]) then
-								local clone = self.Clones[cloneSelected];
+							local limbData = {};
 
-								local limbData = {};
+							for _, limbName in ipairs(CF.LimbIDs[clone.Class]) do
+								limbData[limbName] = clone[limbName];
+							end
 
-								for _, limbName in ipairs(CF.LimbIDs[clone.Class]) do
-									limbData[limbName] = clone[limbName];
+							local actor = CF.MakeActor(
+								clone.Class,
+								clone.Preset,
+								clone.Module,
+								clone.XP,
+								clone.Identity,
+								clone.Player,
+								clone.Prestige,
+								clone.Name,
+								limbData
+							);
+
+							if actor ~= nil then
+								actor.Team = CF.PlayerTeam;
+								actor.AIMode = Actor.AIMODE_SENTRY;
+
+								for i = 1, #clone.Items do
+									local item = clone.Items[i];
+									local item = CF.MakeItem(item.Class, item.Preset, item.Module);
+
+									if item ~= nil then
+										if item:HasScript(CF.ModuleName .. "/Items/Limb.lua") and CF.AttemptReplaceLimb(actor, item) then
+											DeleteEntity(item);
+										else
+											actor:AddInventoryItem(item);
+										end
+									else
+										self.ClonesControlMessageTime = tonumber(self.GS["Time"]);
+										self.ClonesControlMessageText = "Can't create item. Very bad.";
+									end
 								end
 
-								local actor = CF.MakeActor(
-									clone.Class,
-									clone.Preset,
-									clone.Module,
-									clone.XP,
-									clone.Identity,
-									clone.Player,
-									clone.Prestige,
-									clone.Name,
-									limbData
-								);
+								if IsAHuman(actor) and ToAHuman(actor).Head == nil then
+									actor.DeathSound = nil;
+									actor.Status = Actor.DEAD;
+								end
 
-								if actor ~= nil then
-									actor.Team = CF.PlayerTeam;
-									actor.AIMode = Actor.AIMODE_SENTRY;
+								actor.Pos = self.ClonesDeployPos or self.ClonesControlPanelPos;
+								actor.RestThreshold = -1;
+								MovableMan:AddActor(actor);
+								self:AddPreEquippedItemsToRemovalQueue(actor);
+								table.remove(self.Clones, cloneSelected);
+								CF.SetClonesArray(self.GS, self.Clones);
 
-									for i = 1, #clone.Items do
-										local item = clone.Items[i];
-										local item = CF.MakeItem(item.Class, item.Preset, item.Module);
+								if cloneSelected < 1 then
+									cloneSelected = #self.Clones;
+								end
 
-										if item ~= nil then
-											if item:HasScript(CF.ModuleName .. "/Items/Limb.lua") and CF.AttemptReplaceLimb(actor, item) then
-												DeleteEntity(item);
-											else
-												actor:AddInventoryItem(item);
-											end
-										else
-											self.ClonesControlMessageTime = tonumber(self.GS["Time"]);
-											self.ClonesControlMessageText = "Can't create item. Very bad.";
-										end
-									end
-
-									if IsAHuman(actor) and ToAHuman(actor).Head == nil then
-										actor.DeathSound = nil;
-										actor.Status = Actor.DEAD;
-									end
-
-									actor.Pos = self.ClonesDeployPos or self.ClonesControlPanelPos;
-									actor.RestThreshold = -1;
-									MovableMan:AddActor(actor);
-									self:AddPreEquippedItemsToRemovalQueue(actor);
-									table.remove(self.Clones, cloneSelected);
-									CF.SetClonesArray(self.GS, self.Clones);
-
-									if cloneSelected < 1 then
-										cloneSelected = #self.Clones;
-									end
-
-									if cloneSelected > #self.Clones then
-										cloneSelected = 1;
-									end
-								else
-									self.ClonesControlMessageTime = tonumber(self.GS["Time"]);
-									self.ClonesControlMessageText = "Actor could not be created. Very bad.";
+								if cloneSelected > #self.Clones then
+									cloneSelected = 1;
 								end
 							else
 								self.ClonesControlMessageTime = tonumber(self.GS["Time"]);
-								self.ClonesControlMessageText = "Too many units. Upgrade life support.";
+								self.ClonesControlMessageText = "Actor could not be created. Very bad.";
 							end
 						else
 							self.ClonesControlMessageTime = tonumber(self.GS["Time"]);
-							self.ClonesControlMessageText = "Clone storage is empty.";
+							self.ClonesControlMessageText = "Too many units. Upgrade life support.";
 						end
+					else
+						self.ClonesControlMessageTime = tonumber(self.GS["Time"]);
+						self.ClonesControlMessageText = "Clone storage is empty.";
 					end
-				else
-					self.firePressed[player] = false;
 				end
 
 				-- Change panel text to show life support capacity
@@ -732,32 +720,27 @@ function VoidWanderers:ProcessClonesControlPanelUI()
 
 				local item = clone.Items[itemSelected];
 				
-				if cont:IsState(Controller.WEAPON_FIRE) then
-					if not self.firePressed[player] then
-						self.firePressed[player] = true;
-						local storageFull = CF.CountUsedStorageInArray(self.StorageItems) >= tonumber(self.GS.PlayerVesselStorageCapacity);
+				if self.firePressState[player] == self.pressStates.FRESH then
+					local storageFull = CF.CountUsedStorageInArray(self.StorageItems) >= tonumber(self.GS.PlayerVesselStorageCapacity);
 
-						if not storageFull then
-							if #clone.Items > 0 then
-								CF.PutItemToStorageArray(self.StorageItems, item.Preset, item.Class, item.Module);
-								CF.SetStorageArray(self.GS, self.StorageItems);
+					if not storageFull then
+						if #clone.Items > 0 then
+							CF.PutItemToStorageArray(self.StorageItems, item.Preset, item.Class, item.Module);
+							CF.SetStorageArray(self.GS, self.StorageItems);
 
-								self.StorageItems, self.StorageFilters = CF.GetStorageArray(self.GS, true);
-								table.remove(clone.Items, itemSelected);
-								CF.SetClonesArray(self.GS, self.Clones);
+							self.StorageItems, self.StorageFilters = CF.GetStorageArray(self.GS, true);
+							table.remove(clone.Items, itemSelected);
+							CF.SetClonesArray(self.GS, self.Clones);
 
-								itemSelected = math.min(#clone.Items, itemSelected);
-							else
-								self.ClonesControlMessageText = "Clone has no items!";
-								self.ClonesControlMessageTime = tonumber(self.GS["Time"]);
-							end
+							itemSelected = math.min(#clone.Items, itemSelected);
 						else
-							self.ClonesControlMessageText = "Item storage full!";
+							self.ClonesControlMessageText = "Clone has no items!";
 							self.ClonesControlMessageTime = tonumber(self.GS["Time"]);
 						end
+					else
+						self.ClonesControlMessageText = "Item storage full!";
+						self.ClonesControlMessageTime = tonumber(self.GS["Time"]);
 					end
-				else
-					self.firePressed[player] = false;
 				end
 
 				local lineOffset = topOfPage;
@@ -821,42 +804,36 @@ function VoidWanderers:ProcessClonesControlPanelUI()
 					itemSelected = #self.StorageItems;
 				end
 
-				if cont:IsState(Controller.WEAPON_FIRE) then
-					if not self.firePressed[player] then
-						self.firePressed[player] = true;
+				if self.firePressState[player] == self.pressStates.FRESH then
+					local fullInventory = #clone.Items >= CF.MaxStoredActorInventory;
 
-						local fullInventory = #clone.Items >= CF.MaxStoredActorInventory;
+					if #self.StorageItems > 0 then
+						if not fullInventory then
+							local item = self.StorageItems[itemSelected];
+							item.Count = item.Count - 1;
 
-						if #self.StorageItems > 0 then
-							if not fullInventory then
-								local item = self.StorageItems[itemSelected];
-								item.Count = item.Count - 1;
+							local newItem = {};
+							newItem.Preset = item.Preset;
+							newItem.Class = item.Class;
+							newItem.Module = item.Module;
+							table.insert(clone.Items, newItem);
 
-								local newItem = {};
-								newItem.Preset = item.Preset;
-								newItem.Class = item.Class;
-								newItem.Module = item.Module;
-								table.insert(clone.Items, newItem);
+							CF.SetClonesArray(self.GS, self.Clones);
+							CF.SetStorageArray(self.GS, self.StorageItems);
 
-								CF.SetClonesArray(self.GS, self.Clones);
-								CF.SetStorageArray(self.GS, self.StorageItems);
-
-								if item.Count == 0 then
-									self.StorageItems, self.StorageFilters = CF.GetStorageArray(self.GS, true);
-								end
-
-								itemSelected = math.min(#self.StorageItems, itemSelected);
-							else
-								self.ClonesControlMessageText = "Clone has no inventory space left.";
-								self.ClonesControlMessageTime = tonumber(self.GS["Time"]);
+							if item.Count == 0 then
+								self.StorageItems, self.StorageFilters = CF.GetStorageArray(self.GS, true);
 							end
+
+							itemSelected = math.min(#self.StorageItems, itemSelected);
 						else
-							self.ClonesControlMessageText = "No items in storage.";
+							self.ClonesControlMessageText = "Clone has no inventory space left.";
 							self.ClonesControlMessageTime = tonumber(self.GS["Time"]);
 						end
+					else
+						self.ClonesControlMessageText = "No items in storage.";
+						self.ClonesControlMessageTime = tonumber(self.GS["Time"]);
 					end
-				else
-					self.firePressed[player] = false;
 				end
 
 				local lineOffset = topOfPage;

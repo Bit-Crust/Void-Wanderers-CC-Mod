@@ -24,9 +24,6 @@ end
 -----------------------------------------------------------------------
 function LoadForm:Load(document, activity)
 	local ui = {};
-	
-	local resolution = Vector(FrameMan.PlayerScreenWidth, FrameMan.PlayerScreenHeight);
-	local center = Vector(SceneMan.Scene.Width / 4, SceneMan.Scene.Height / 2);
 
 	local saveSlotWidth = 180;
 	local saveSlotHeight = 70;
@@ -114,7 +111,7 @@ function LoadForm:Load(document, activity)
 	
 	table.insert(ui, {
 		Type = CF.ElementTypes.LABEL,
-		Pos = document.mid + Vector(0, -resolution.Y / 2 + 33),
+		Pos = document.mid + Vector(0, -document.resolution.Y / 2 + 33),
 		Centered = 1,
 		Text = "LOAD GAME",
 		Width = 800,
@@ -123,7 +120,7 @@ function LoadForm:Load(document, activity)
 	
 	table.insert(ui, {
 		Type = CF.ElementTypes.BUTTON,
-		Pos = document.mid + Vector(resolution.X / 2 - 70 - 20, -resolution.Y / 2 + 12 + 20),
+		Pos = document.mid + Vector(document.resolution.X / 2 - 70 - 20, -document.resolution.Y / 2 + 12 + 20),
 		Text = "Back",
 		Width = 140,
 		Height = 40,
@@ -131,7 +128,7 @@ function LoadForm:Load(document, activity)
 	});
 	
 	document.scrollingScreen = { X = false, Y = false };
-	document.bound.Corner = center * 1;
+	document.bound.Corner = document.center * 1;
 	document.bound.Height = 0;
 	document.bound.Width = 0;
 

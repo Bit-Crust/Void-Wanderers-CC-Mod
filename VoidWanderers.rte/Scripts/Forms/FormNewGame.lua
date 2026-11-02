@@ -59,14 +59,25 @@ local function factionButtonOnClick(element, form, activity)
 		local actor = CF.SpawnRandomInfantry(-1, slot.Pos, faction, Actor.AIMODE_SENTRY);
 
 		if actor then
-			actor.HFlipped = false;
+			actor:EnableOrDisableAllScripts(false);
 			actor:SetControllerMode(Controller.CIM_DISABLED, -1);
+			actor.ToSettle = true;
+			actor.HUDVisible = false;
+			actor.IgnoreTerrain = true;
+			actor.IgnoresActorHits = true;
+			actor.HFlipped = false;
+			actor.SimUpdatesBetweenScriptedUpdates = 0;
 			actor.HitsMOs = false;
 			actor.GetsHitByMOs = false;
-			actor.IgnoresTerrain = true;
+			actor.PlayerControllable = false;
+			actor:ClearForces();
 
-			slot.Metadata.actor = actor;
+			if actor.Height > factionTileHeight then
+				actor.Scale = factionTileHeight / actor.Height;
+			end
 		end
+
+		slot.Metadata.actor = actor;
 
 		form.selectedParticipants[relevantIndex] = factionIndex;
 		form.factionButtons[factionIndex].Palettes = CF.MenuDeniedPalette;
@@ -119,11 +130,8 @@ end
 function NewGameForm:Load(document, activity)
 	local ui = {};
 
-	local resolution = Vector(FrameMan.PlayerScreenWidth, FrameMan.PlayerScreenHeight);
-	local center = Vector(SceneMan.Scene.Width / 4, SceneMan.Scene.Height / 2);
-
-	self.addSoundContainer = CreateSoundContainer("Confirm");
-	self.removeSoundContainer = CreateSoundContainer("Error");
+	self.addSoundContainer = CreateSoundContainer("Confirm", "Base.rte");
+	self.removeSoundContainer = CreateSoundContainer("Error", "Base.rte");
 
 	self.playableFactions = {};
 	self.factionsStatic = {};
@@ -167,34 +175,44 @@ function NewGameForm:Load(document, activity)
 			columnsThisRow = columnsInLastRow;
 		end
 
-		local factionSlotOffset = center + Vector(
+		local factionSlotOffset = document.center + Vector(
 			xTile * (factionTileWidth) + (factionTileWidth / 2) - columnsThisRow * (factionTileWidth / 2), 
 			-40 - (factionTileHeight / 2) - yTile * (factionTileHeight)
 		);
 
-		local participantSlotOffset = center + Vector(
+		local participantSlotOffset = document.center + Vector(
 			xTile * (factionTileWidth) + (factionTileWidth / 2) - columnsThisRow * (factionTileWidth / 2), 
 			40 + (participantsTileHeight / 2) + yTile * (participantsTileHeight)
 		);
 
 		local textContent = CF.FactionDescriptions[faction];
-		maxDescriptionLines = math.max(maxDescriptionLines, CF.GetStringPixelWidth(textContent) / 400);
+		maxDescriptionLines = math.max(maxDescriptionLines, CF.GetStringPixelWidth(textContent, nil, true) / (document.resolution.X - 40));
 
-		local actor = CF.SpawnRandomInfantry(-1, factionSlotOffset, faction, Actor.AIMODE_SENTRY);
+		local actor = CF.SpawnRandomInfantry(Activity.TEAM_1, factionSlotOffset, faction, Actor.AIMODE_SENTRY);
 
 		if actor ~= nil then
-			actor:EnableOrDisableAllScripts(false);
+			local function recursiveDisableScripts(mosRotating)
+				for attachable in mosRotating.Attachables do
+					recursiveDisableScripts(attachable);
+				end
+
+				mosRotating:EnableOrDisableAllScripts(false);
+			end
+
+			recursiveDisableScripts(actor);
 			actor:SetControllerMode(Controller.CIM_DISABLED, -1);
 			actor.ToSettle = true;
+			actor.HUDVisible = false;
 			actor.IgnoreTerrain = true;
 			actor.IgnoresActorHits = true;
 			actor.HFlipped = false;
 			actor.SimUpdatesBetweenScriptedUpdates = 0;
 			actor.HitsMOs = false;
 			actor.GetsHitByMOs = false;
+			actor.PlayerControllable = false;
 			actor:ClearForces();
 
-			if (actor.Height > factionTileHeight) then
+			if actor.Height > factionTileHeight then
 				actor.Scale = factionTileHeight / actor.Height;
 			end
 		end
@@ -212,8 +230,7 @@ function NewGameForm:Load(document, activity)
 				index = i,
 				factionId = faction,
 				factionName = CF.FactionNames[faction],
-				description = CF.SplitStringToFitWidth(textContent, 400, false),
-				actor = actor,
+				description = CF.SplitStringToFitWidth(textContent, document.resolution.X - 40, true),
 			},
 		};
 
@@ -263,7 +280,7 @@ function NewGameForm:Load(document, activity)
 
 	local okButton = {
 		Type = CF.ElementTypes.BUTTON,
-		Pos = center + vertOffset,
+		Pos = document.center + vertOffset,
 		Text = "OK",
 		Width = 140,
 		Height = 40,
@@ -274,12 +291,26 @@ function NewGameForm:Load(document, activity)
 	table.insert(ui, okButton);
 	self.okButton = okButton;
 
+	local factionInfoBackdrop = {
+		Type = CF.ElementTypes.LABEL,
+		Preset = nil,
+		Pos = document.scroll + Vector(0, -document.resolution.Y / 2 + 8 + 40),
+		Text = "",
+		Centered = true,
+		Width = document.resolution.X + 8,
+		Height = maxDescriptionHeight + 80,
+		Backdrop = true,
+	};
+
+	table.insert(ui, factionInfoBackdrop);
+	self.factionInfoBackdrop = factionInfoBackdrop;
+
 	vertOffset.Y = -(40 + rows * factionTileHeight + 22);
 
 	local phaseLabel = {
 		Type = CF.ElementTypes.LABEL,
 		Preset = nil,
-		Pos = center + vertOffset,
+		Pos = document.center + vertOffset,
 		Text = "SELECT STARTING FACTION",
 		Centered = true,
 		Width = 800,
@@ -294,10 +325,11 @@ function NewGameForm:Load(document, activity)
 	local factionDescriptionLabel = {
 		Type = CF.ElementTypes.LABEL,
 		Preset = nil,
-		Pos = center + vertOffset,
+		Pos = document.center + vertOffset,
 		Text = "",
+		SmallFont = true,
 		Centered = true,
-		Width = 400,
+		Width = document.resolution.X - 40,
 		Height = 100,
 	};
 
@@ -309,7 +341,7 @@ function NewGameForm:Load(document, activity)
 	local factionNameLabel = {
 		Type = CF.ElementTypes.LABEL,
 		Preset = nil,
-		Pos = center + vertOffset,
+		Pos = document.center + vertOffset,
 		Text = "",
 		Centered = true,
 		Width = 400,
@@ -324,24 +356,24 @@ function NewGameForm:Load(document, activity)
 	local headerLabel = {
 		Type = CF.ElementTypes.LABEL,
 		Preset = nil,
-		Pos = center + vertOffset,
+		Pos = document.scroll - Vector(0, document.resolution.Y / 2 - 8),
 		Text = "START NEW GAME",
 		Centered = true,
-		Width = 800,
-		Height = 11,
+		Width = document.resolution.X,
+		Height = 16,
 	};
 
 	table.insert(ui, headerLabel);
 	self.headerLabel = headerLabel;
 
-	vertOffset.X = resolution.X / 2 - 70 - 20;
+	vertOffset.X = document.resolution.X / 2 - 70 - 20;
 
 	local backButton = {
 		Type = CF.ElementTypes.BUTTON,
-		Pos = center + vertOffset,
+		Pos = document.center + vertOffset,
 		Text = "Back",
-		Width = 140,
-		Height = 40,
+		Width = CF.GetStringPixelWidth("Back", nil, false) + 6,
+		Height = 14,
 		Visible = true,
 		OnClick = backButtonOnClick,
 	};
@@ -349,11 +381,11 @@ function NewGameForm:Load(document, activity)
 	table.insert(ui, backButton);
 	self.backButton = backButton;
 
-	vertOffset.Y = vertOffset.Y - 40 + resolution.Y / 2;
+	vertOffset.Y = vertOffset.Y - 40 + document.resolution.Y / 2;
 
 	document.scrollingScreen = { X = false, Y = true };
-	document.bound.Corner = center + Vector(0, vertOffset.Y);
-	document.bound.Height = 40 + rows * participantsTileHeight + 20 - resolution.Y / 2 - vertOffset.Y;
+	document.bound.Corner = document.center + Vector(0, vertOffset.Y);
+	document.bound.Height = 40 + rows * participantsTileHeight + 20 - document.resolution.Y / 2 - vertOffset.Y;
 	document.bound.Width = 0;
 
 	return ui;
@@ -369,13 +401,21 @@ end
 -----------------------------------------------------------------------
 function NewGameForm:Update(document, activity)
 	local hoverIndex = document.hoverOverIndex;
-	
+
 	self.factionDescriptionLabel.Text = "";
 	self.factionNameLabel.Text = "";
 
+	-- Update positions to track screen scroll
+	self.headerLabel.Pos = document.scroll + Vector(0, -document.resolution.Y / 2 + 8);
+	self.backButton.Pos = document.scroll + Vector(document.resolution.X / 2 - 40 - self.backButton.Width / 2 - 1, -document.resolution.Y / 2 + 8);
+	self.factionInfoBackdrop.Pos = document.scroll + Vector(0, -document.resolution.Y / 2 + 8 + 40);
+	self.factionNameLabel.Pos = document.scroll + Vector(0, -document.resolution.Y / 2 + 8 + 16);
+	self.factionDescriptionLabel.Pos = document.scroll + Vector(0, -document.resolution.Y / 2 + 8 + 30);
+	self.phaseLabel.Pos = document.scroll + Vector(0, -document.resolution.Y / 2 + 8 + self.factionInfoBackdrop.Height);
+
 	if hoverIndex ~= 0 then
 		local button = document.ui[hoverIndex];
-		
+
 		if not button or button.Type ~= CF.ElementTypes.BUTTON then
 			return;
 		end

@@ -25,13 +25,9 @@ function VoidWanderers:StartActivity(isNewGame)
 				
 				if key == "FactionTypes" then
 					key = "FactionNatureTypes";
-				end
-
-				if key == "Brains" then
+				elseif key == "Brains" then
 					key = "BrainPresets";
-				end
-
-				if key == "Crafts" then
+				elseif key == "Crafts" then
 					key = "CraftPresets";
 				end
 
@@ -55,8 +51,13 @@ function VoidWanderers:StartActivity(isNewGame)
 	self.saveLoadHandler = require("Scripts/Utility/SaveLoadHandler");
 	self.saveLoadHandler:Initialize(false);
 	
-	-- Init a couple properties and constants
-	self.firePressed = {};
+	-- Whether or not this is the first frame of a fire-press
+	self.firePressState = {};
+	self.pressStates = {
+		NOT_PRESSED = 0,
+		FRESH = 1,
+		STALE = 2,
+	};
 
 	-- Check delta time and fix it to avoid problems with fonts
 	-- this maddens me
@@ -88,8 +89,7 @@ function VoidWanderers:StartActivity(isNewGame)
 	dofile(self.panelPath .. "Panel_Turrets.lua");
 	dofile(self.panelPath .. "Panel_Bombs.lua");
 
-	-- Now that all the libraries and all caps constants are loaded, it should be safe
-	-- This function basically boots the game
+	-- Now that all the libraries are loaded, it should be safe, this function basically boots the game
 	CF.InitFactions(self);
 	
 	-- If this is a new game, IE restart or initial start, then open the correct form and scene
@@ -97,12 +97,10 @@ function VoidWanderers:StartActivity(isNewGame)
 	if isNewGame then
 		print("VoidWanderers:StartActivity: Detected new game");
 		self.formToLoad = "FormStart.lua";
-
 		self.sceneToLaunch = "Void Wanderers";
 		self.scriptToLaunch = "StrategyScreenMain.lua";
 	else
 		print("VoidWanderers:StartActivity: Detected load game");
-
 		self.GS = self:loadSaveData();
 		self.sceneToLaunch = self.GS["Scene"];
 		self.scriptToLaunch = "Tactics.lua";
@@ -124,6 +122,20 @@ end
 -- Update Activity
 -----------------------------------------------------------------------
 function VoidWanderers:UpdateActivity()
+	for player = Activity.PLAYER_NONE + 1, Activity.MAXPLAYERCOUNT - 1 do
+		local cont = self:GetPlayerController(player);
+
+		if cont:IsState(Controller.WEAPON_FIRE) then
+			if self.firePressState[player] == self.pressStates.NOT_PRESSED then
+				self.firePressState[player] = self.pressStates.FRESH;
+			else
+				self.firePressState[player] = self.pressStates.STALE;
+			end
+		else
+			self.firePressState[player] = self.pressStates.NOT_PRESSED;
+		end
+	end
+
 	local deploymentToSerialize = self.deploymentToSerialize;
 	
 	if deploymentToSerialize then

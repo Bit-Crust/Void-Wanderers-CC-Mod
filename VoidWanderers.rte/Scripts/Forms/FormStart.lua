@@ -24,13 +24,10 @@ end
 -----------------------------------------------------------------------
 function StartForm:Load(document, activity)
 	local ui = {};
-
-	local resolution = Vector(FrameMan.PlayerScreenWidth, FrameMan.PlayerScreenHeight);
-	local center = Vector(SceneMan.Scene.Width / 4, SceneMan.Scene.Height / 2);
 	
 	table.insert(ui, {
 		Type = CF.ElementTypes.BUTTON,
-		Pos = center + Vector(0, -40),
+		Pos = document.center + Vector(0, -40),
 		Text = "Continue game",
 		Width = 140,
 		Height = 40,
@@ -39,7 +36,7 @@ function StartForm:Load(document, activity)
 
 	table.insert(ui, {
 		Type = CF.ElementTypes.BUTTON,
-		Pos = center + Vector(0, -0),
+		Pos = document.center + Vector(0, -0),
 		Text = "New game",
 		Width = 140,
 		Height = 40,
@@ -48,7 +45,7 @@ function StartForm:Load(document, activity)
 
 	table.insert(ui, {
 		Type = CF.ElementTypes.BUTTON,
-		Pos = center + Vector(0, 40),
+		Pos = document.center + Vector(0, 40),
 		Text = "Load game",
 		Width = 140,
 		Height = 40,
@@ -56,7 +53,7 @@ function StartForm:Load(document, activity)
 	});
 	
 	document.scrollingScreen = { X = false, Y = false };
-	document.bound.Corner = center * 1;
+	document.bound.Corner = document.center * 1;
 	document.bound.Height = 0;
 	document.bound.Width = 0;
 	MusicMan:PlayDynamicSong("Main Menu Music DynamicSong", "Default", false, true, true);

@@ -577,42 +577,37 @@ function VoidWanderers:ProcessLZControlPanelUI()
 					end
 				end
 
-				if cont:IsState(Controller.WEAPON_FIRE) then
-					if not self.firePressed[player] then
-						self.firePressed[player] = true
-						local selectedBomb = bombs[selectedItem];
+				if self.firePressState[player] == self.pressStates.FRESH then
+					local selectedBomb = bombs[selectedItem];
 
-						if selectedBomb ~= nil then
-							if selectedBomb.Preset == "Request orbital strike" and #self.BombPayload > 0 then
-								self.BombsControlPanelSelectedModes[selectedpanel] = self.BombsControlPanelModes.RETURN;
-								self:InitBombsControlPanelUI();
-								if MovableMan:IsActor(self.BombsControlPanelActor) then
-									bombs[#bombs] = nil;
+					if selectedBomb ~= nil then
+						if selectedBomb.Preset == "Request orbital strike" and #self.BombPayload > 0 then
+							self.BombsControlPanelSelectedModes[selectedpanel] = self.BombsControlPanelModes.RETURN;
+							self:InitBombsControlPanelUI();
+							if MovableMan:IsActor(self.BombsControlPanelActor) then
+								bombs[#bombs] = nil;
 
-									if self.LastKnownBombingPosition == nil then
-										self.BombsControlPanelActor.Pos = Vector(pos.X, 0);
-									else
-										self.BombsControlPanelActor.Pos = self.LastKnownBombingPosition;
-									end
-
-									self:SwitchToActor(self.BombsControlPanelActor, player, CF.PlayerTeam);
-									return;
+								if self.LastKnownBombingPosition == nil then
+									self.BombsControlPanelActor.Pos = Vector(pos.X, 0);
+								else
+									self.BombsControlPanelActor.Pos = self.LastKnownBombingPosition;
 								end
-							else
-								if selectedBomb.Count > 0 and #self.BombPayload < tonumber(self.GS["PlayerVesselBombBays"]) * CF.BombsPerBay then
-									bombs[selectedItem].Count = bombs[selectedItem].Count - 1
 
-									local payload = {};
-									payload.Preset = selectedBomb.Preset;
-									payload.Class = selectedBomb.Class;
-									payload.Module = selectedBomb.Module;
-									table.insert(self.BombPayload, payload);
-								end
+								self:SwitchToActor(self.BombsControlPanelActor, player, CF.PlayerTeam);
+								return;
+							end
+						else
+							if selectedBomb.Count > 0 and #self.BombPayload < tonumber(self.GS["PlayerVesselBombBays"]) * CF.BombsPerBay then
+								bombs[selectedItem].Count = bombs[selectedItem].Count - 1
+
+								local payload = {};
+								payload.Preset = selectedBomb.Preset;
+								payload.Class = selectedBomb.Class;
+								payload.Module = selectedBomb.Module;
+								table.insert(self.BombPayload, payload);
 							end
 						end
 					end
-				else
-					self.firePressed[player] = false
 				end
 
 				local itemsPerPage = self.BombsControlPanelItemsPerPage;

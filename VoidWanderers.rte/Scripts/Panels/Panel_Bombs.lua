@@ -137,26 +137,20 @@ function VoidWanderers:ProcessBombsControlPanelUI()
 				local targetpos = SceneMan:MovePointToGround(Vector(x, 0), 20, 3)
 				self:AddObjectivePoint("", targetpos, CF.PlayerTeam, GameActivity.ARROWDOWN)
 
-				if cont:IsState(Controller.WEAPON_FIRE) then
-					if not self.firePressed[player] then
-						self.firePressed[player] = true
+				if self.firePressState[player] == self.pressStates.FRESH then
+					if self.BombingTarget == nil then
+						self.BombingTarget = bombpos.X
+						self.BombingStart = tonumber(self.GS["Time"])
+						self.BombingLoadTime = math.ceil(
+							#self.BombPayload / tonumber(self.GS["PlayerVesselBombBays"])
+						) * CF.BombLoadInterval
+						self.BombingRange = range
+						self.BombingLastBombShot = tonumber(self.GS["Time"])
+						self.BombingCount = 1
 
-						if self.BombingTarget == nil then
-							self.BombingTarget = bombpos.X
-							self.BombingStart = tonumber(self.GS["Time"])
-							self.BombingLoadTime = math.ceil(
-								#self.BombPayload / tonumber(self.GS["PlayerVesselBombBays"])
-							) * CF.BombLoadInterval
-							self.BombingRange = range
-							self.BombingLastBombShot = tonumber(self.GS["Time"])
-							self.BombingCount = 1
-
-							-- Commit bombs to storage
-							CF.SetBombsArray(self.GS, self.Bombs)
-						end
+						-- Commit bombs to storage
+						CF.SetBombsArray(self.GS, self.Bombs)
 					end
-				else
-					self.firePressed[player] = false
 				end
 			end
 		end

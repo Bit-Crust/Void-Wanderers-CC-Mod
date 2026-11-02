@@ -169,70 +169,64 @@ function VoidWanderers:ProcessTurretsControlPanelUI()
 							end
 						end
 
-						if cont:IsState(Controller.WEAPON_FIRE) then
-							if not self.firePressed[player] then
-								self.firePressed[player] = true
+						if self.firePressState[player] == self.pressStates.FRESH then
+							if self.SelectedTurret > 0 then
+								-- Remove current turret  if 'remove turret' was selected
+								if self.Turrets[self.SelectedTurret]["Preset"] == "Remove turret" then
+									if
+										self.GS["DeployedTurret" .. turr .. "Preset"] ~= nil
+										and self.GS["DeployedTurret" .. turr .. "Class"] ~= nil
+									then
+										if
+											CF.CountUsedTurretsInArray(self.Turrets)
+											< tonumber(self.GS["PlayerVesselTurretStorage"])
+										then
+											if self.Turrets[#self.Turrets]["Preset"] == "Remove turret" then
+												self.Turrets[#self.Turrets] = nil
+											end
 
-								if self.SelectedTurret > 0 then
-									-- Remove current turret  if 'remove turret' was selected
-									if self.Turrets[self.SelectedTurret]["Preset"] == "Remove turret" then
+											self.SelectedTurret = #self.Turrets
+
+											CF.PutTurretToStorageArray(
+												self.Turrets,
+												self.GS["DeployedTurret" .. turr .. "Preset"],
+												self.GS["DeployedTurret" .. turr .. "Class"],
+												self.GS["DeployedTurret" .. turr .. "Module"]
+											)
+
+											self.GS["DeployedTurret" .. turr .. "Preset"] = nil
+											self.GS["DeployedTurret" .. turr .. "Class"] = nil
+											self.GS["DeployedTurret" .. turr .. "Module"] = nil
+											CF.SetTurretsArray(self.GS, self.Turrets)
+										end
+									end
+								else
+									if self.Turrets[self.SelectedTurret]["Count"] > 0 then
 										if
 											self.GS["DeployedTurret" .. turr .. "Preset"] ~= nil
 											and self.GS["DeployedTurret" .. turr .. "Class"] ~= nil
 										then
-											if
-												CF.CountUsedTurretsInArray(self.Turrets)
-												< tonumber(self.GS["PlayerVesselTurretStorage"])
-											then
-												if self.Turrets[#self.Turrets]["Preset"] == "Remove turret" then
-													self.Turrets[#self.Turrets] = nil
-												end
-
-												self.SelectedTurret = #self.Turrets
-
-												CF.PutTurretToStorageArray(
-													self.Turrets,
-													self.GS["DeployedTurret" .. turr .. "Preset"],
-													self.GS["DeployedTurret" .. turr .. "Class"],
-													self.GS["DeployedTurret" .. turr .. "Module"]
-												)
-
-												self.GS["DeployedTurret" .. turr .. "Preset"] = nil
-												self.GS["DeployedTurret" .. turr .. "Class"] = nil
-												self.GS["DeployedTurret" .. turr .. "Module"] = nil
-												CF.SetTurretsArray(self.GS, self.Turrets)
-											end
+											CF.PutTurretToStorageArray(
+												self.Turrets,
+												self.GS["DeployedTurret" .. turr .. "Preset"],
+												self.GS["DeployedTurret" .. turr .. "Class"],
+												self.GS["DeployedTurret" .. turr .. "Module"]
+											)
 										end
-									else
-										if self.Turrets[self.SelectedTurret]["Count"] > 0 then
-											if
-												self.GS["DeployedTurret" .. turr .. "Preset"] ~= nil
-												and self.GS["DeployedTurret" .. turr .. "Class"] ~= nil
-											then
-												CF.PutTurretToStorageArray(
-													self.Turrets,
-													self.GS["DeployedTurret" .. turr .. "Preset"],
-													self.GS["DeployedTurret" .. turr .. "Class"],
-													self.GS["DeployedTurret" .. turr .. "Module"]
-												)
-											end
 
-											self.GS["DeployedTurret" .. turr .. "Preset"] =
-												self.Turrets[self.SelectedTurret]["Preset"]
-											self.GS["DeployedTurret" .. turr .. "Class"] =
-												self.Turrets[self.SelectedTurret]["Class"]
-											self.GS["DeployedTurret" .. turr .. "Module"] =
-												self.Turrets[self.SelectedTurret]["Module"]
-											self.Turrets[self.SelectedTurret]["Count"] = self.Turrets[self.SelectedTurret]["Count"]
-												- 1
+										self.GS["DeployedTurret" .. turr .. "Preset"] =
+											self.Turrets[self.SelectedTurret]["Preset"]
+										self.GS["DeployedTurret" .. turr .. "Class"] =
+											self.Turrets[self.SelectedTurret]["Class"]
+										self.GS["DeployedTurret" .. turr .. "Module"] =
+											self.Turrets[self.SelectedTurret]["Module"]
+										self.Turrets[self.SelectedTurret]["Count"] = self.Turrets[self.SelectedTurret]["Count"]
+											- 1
 
-											CF.SetTurretsArray(self.GS, self.Turrets)
-										end
+										CF.SetTurretsArray(self.GS, self.Turrets)
 									end
 								end
 							end
-						else
-							self.firePressed[player] = false
 						end
 
 						self.TurretsControlCloneListStart = self.SelectedTurret
@@ -370,15 +364,9 @@ function VoidWanderers:ProcessTurretsControlPanelUI()
 							end
 						end
 
-						if cont:IsState(Controller.WEAPON_FIRE) then
-							if not self.firePressed[player] then
-								self.firePressed[player] = true
-
-								self.TurretsControlPanelEditMode[turr] = true
-								self.TurretsControlPanelInitialized[turr] = false
-							end
-						else
-							self.firePressed[player] = false
+						if self.firePressState[player] == self.pressStates.FRESH then
+							self.TurretsControlPanelEditMode[turr] = true
+							self.TurretsControlPanelInitialized[turr] = false
 						end
 
 						-- Draw background

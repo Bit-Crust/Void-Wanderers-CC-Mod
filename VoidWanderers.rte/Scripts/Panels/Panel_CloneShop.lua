@@ -198,43 +198,37 @@ function VoidWanderers:ProcessCloneShopControlPanelUI()
 				capacity = tonumber(self.GS["PlayerVesselClonesCapacity"]);
 			end
 
-			if cont:IsState(Controller.WEAPON_FIRE) then
-				if not self.firePressed[player] then
-					self.firePressed[player] = true;
-
-					if clone then
-						if clone.Price <= CF.GetPlayerGold(self.GS, 0) then
-							if usage < capacity then
-								if isTurret then
-									CF.PutTurretToStorageArray(self.Turrets, clone.Preset, clone.Class, clone.Module);
-									CF.SetTurretsArray(self.GS, self.Turrets);
-								else
-									local unit = {};
-									unit.Preset = clone.Preset;
-									unit.Class = clone.Class;
-									unit.Module = clone.Module;
-									unit.Items = {};
-									table.insert(self.Clones, unit);
-
-									CF.SetClonesArray(self.GS, self.Clones);
-								end
-
-								CF.ChangePlayerGold(self.GS, -clone.Price);
+			if self.firePressState[player] == self.pressStates.FRESH then
+				if clone then
+					if clone.Price <= CF.GetPlayerGold(self.GS, 0) then
+						if usage < capacity then
+							if isTurret then
+								CF.PutTurretToStorageArray(self.Turrets, clone.Preset, clone.Class, clone.Module);
+								CF.SetTurretsArray(self.GS, self.Turrets);
 							else
-								self.ClonesShopControlMessageTime = tonumber(self.GS["Time"]);
-								self.ClonesShopControlMessageText = "No space within clone storage.";
+								local unit = {};
+								unit.Preset = clone.Preset;
+								unit.Class = clone.Class;
+								unit.Module = clone.Module;
+								unit.Items = {};
+								table.insert(self.Clones, unit);
+
+								CF.SetClonesArray(self.GS, self.Clones);
 							end
+
+							CF.ChangePlayerGold(self.GS, -clone.Price);
 						else
 							self.ClonesShopControlMessageTime = tonumber(self.GS["Time"]);
-							self.ClonesShopControlMessageText = "Can not afford.";
+							self.ClonesShopControlMessageText = "No space within clone storage.";
 						end
 					else
 						self.ClonesShopControlMessageTime = tonumber(self.GS["Time"]);
-						self.ClonesShopControlMessageText = "No clones for purchase.";
+						self.ClonesShopControlMessageText = "Can not afford.";
 					end
+				else
+					self.ClonesShopControlMessageTime = tonumber(self.GS["Time"]);
+					self.ClonesShopControlMessageText = "No clones for purchase.";
 				end
-			else
-				self.firePressed[player] = false;
 			end
 
 			local lineOffset = topOfPage;

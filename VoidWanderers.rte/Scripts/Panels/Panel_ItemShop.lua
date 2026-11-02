@@ -209,41 +209,35 @@ function VoidWanderers:ProcessItemShopControlPanelUI()
 				capacity = tonumber(self.GS["PlayerVesselStorageCapacity"]);
 			end
 
-			if cont:IsState(Controller.WEAPON_FIRE) then
-				if not self.firePressed[player] then
-					self.firePressed[player] = true
+			if self.firePressState[player] == self.pressStates.FRESH then
+				local index = self.ItemShopFilters[mode][itemSelected];
+				local item = self.ItemShopItems[index];
 
-					local index = self.ItemShopFilters[mode][itemSelected];
-					local item = self.ItemShopItems[index];
-
-					if item then
-						if item.Price <= CF.GetPlayerGold(self.GS, 0) then
-							if usage < capacity then
-								if item.Type == CF.WeaponTypes.BOMB then
-									CF.PutBombToStorageArray(self.Bombs, item.Preset, item.Class, item.Module);
-									CF.SetBombsArray(self.GS, self.Bombs);
-								else
-									CF.PutItemToStorageArray(self.StorageItems, item.Preset, item.Class, item.Module);
-									CF.SetStorageArray(self.GS, self.StorageItems);
-									self.StorageItems, self.StorageFilters = CF.GetStorageArray(self.GS, true);
-								end
-
-								CF.ChangePlayerGold(self.GS, -item.Price);
+				if item then
+					if item.Price <= CF.GetPlayerGold(self.GS, 0) then
+						if usage < capacity then
+							if item.Type == CF.WeaponTypes.BOMB then
+								CF.PutBombToStorageArray(self.Bombs, item.Preset, item.Class, item.Module);
+								CF.SetBombsArray(self.GS, self.Bombs);
 							else
-								self.ClonesShopControlMessageTime = tonumber(self.GS["Time"]);
-								self.ClonesShopControlMessageText = "No space within item storage.";
+								CF.PutItemToStorageArray(self.StorageItems, item.Preset, item.Class, item.Module);
+								CF.SetStorageArray(self.GS, self.StorageItems);
+								self.StorageItems, self.StorageFilters = CF.GetStorageArray(self.GS, true);
 							end
+
+							CF.ChangePlayerGold(self.GS, -item.Price);
 						else
 							self.ClonesShopControlMessageTime = tonumber(self.GS["Time"]);
-							self.ClonesShopControlMessageText = "Insufficient funds for purchase.";
+							self.ClonesShopControlMessageText = "No space within item storage.";
 						end
 					else
 						self.ClonesShopControlMessageTime = tonumber(self.GS["Time"]);
-						self.ClonesShopControlMessageText = "No items for purchase.";
+						self.ClonesShopControlMessageText = "Insufficient funds for purchase.";
 					end
+				else
+					self.ClonesShopControlMessageTime = tonumber(self.GS["Time"]);
+					self.ClonesShopControlMessageText = "No items for purchase.";
 				end
-			else
-				self.firePressed[player] = false
 			end
 
 			local lineOffset = topOfPage;

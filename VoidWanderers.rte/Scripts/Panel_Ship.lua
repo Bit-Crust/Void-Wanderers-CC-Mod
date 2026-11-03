@@ -1486,7 +1486,7 @@ function VoidWanderers:ProcessShipControlPanelUI()
 				local current = tonumber(self.GS[self.ShipControlUpgrades[self.ShipControlSelectedUpgrade]["Variable"]])
 				local maximum = self.ShipControlUpgrades[self.ShipControlSelectedUpgrade]["Max"]
 				local bundle = self.ShipControlUpgrades[self.ShipControlSelectedUpgrade]["Bundle"]
-				amount = math.min(maximum - current, bundle)
+				local amount = math.min(maximum - current, bundle)
 
 
 				local price = self.ShipControlUpgrades[self.ShipControlSelectedUpgrade]["Price"] * amount
@@ -1842,7 +1842,7 @@ function VoidWanderers:ProcessShipControlPanelUI()
 				bonus = math.floor(bonus)
 				instl = math.floor(instl)
 
-				total = price + instl - bonus
+				local total = price + instl - bonus
 
 				CF["DrawString"]("BASE PRICE:", pos + Vector(8, 48) + Vector(-140, 0), 140, 40)
 				CF["DrawString"](tostring(price) .. "oz", pos + Vector(76, 48) + Vector(-140, 0), 140, 40)

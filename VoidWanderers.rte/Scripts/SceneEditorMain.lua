@@ -136,7 +136,7 @@ function VoidWanderers:CreateActors()
 		G_CursorActor.Team = CF["PlayerTeam"]
 		local curactor = self:GetControlledActor(Activity.PLAYER_1)
 
-		if act and MovableMan:IsActor(curactor) then
+		if curactor and MovableMan:IsActor(curactor) then
 			G_CursorActor.Pos = curactor.Pos
 		else
 			local curactor = self:GetPlayerBrain(0)

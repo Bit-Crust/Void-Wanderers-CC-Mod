@@ -641,7 +641,7 @@ CF["GetCloneBlackMarketArray"] = function(gs, makefilters)
 
 	--tocreate = true -- DEBUG
 
-	arr = {}
+	local arr = {}
 
 	-- Create list of items available in blackmarket
 	if tocreate then
@@ -720,7 +720,6 @@ CF["GetCloneBlackMarketArray"] = function(gs, makefilters)
 	local count = tonumber(gs["BlackMarket" .. loc .. "ActorsCount"]) and tonumber(
 		gs["BlackMarket" .. loc .. "ActorsCount"]
 	) or 0
-	arr = nil
 	arr = {}
 
 	for i = 1, count do

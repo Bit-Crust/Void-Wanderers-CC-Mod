@@ -214,7 +214,7 @@ function VoidWanderers:StartActivity()
 							end
 
 							-- Save inventory
-							local pre, cls, mdl = CF.GetInventory(act)
+							local pre, cls, mdl = CF.GetInventory(actor)
 
 							for j = 1, #pre do
 								self.GS["Brain" .. player .. "Item" .. j .. "Preset"] = pre[j]
@@ -325,7 +325,7 @@ function VoidWanderers:StartActivity()
 
 					-- If it is an RPG brain
 					if actor:GetNumberValue("VW_BrainOfPlayer") - 1 ~= Activity.PLAYER_NONE then
-						player = actor:GetNumberValue("VW_BrainOfPlayer") - 1
+						local player = actor:GetNumberValue("VW_BrainOfPlayer") - 1
 						
 						self:SetPlayerBrain(actor, player)
 						self:SwitchToActor(actor, player, CF.PlayerTeam)
@@ -431,7 +431,7 @@ function VoidWanderers:StartActivity()
 
 				-- If it is an RPG brain
 				if actor:GetNumberValue("VW_BrainOfPlayer") - 1 ~= Activity.PLAYER_NONE then
-					player = actor:GetNumberValue("VW_BrainOfPlayer") - 1
+					local player = actor:GetNumberValue("VW_BrainOfPlayer") - 1
 
 					self:SetPlayerBrain(actor, player)
 					self:SwitchToActor(actor, player, CF.PlayerTeam)
@@ -497,7 +497,7 @@ function VoidWanderers:StartActivity()
 							end
 							if surroundingStrength < materialThreshold * (1 + dots) then
 								crt.Pos = potentialPos
-								ok = true
+								break
 							end
 						else
 							potentialPos = SceneMan:MovePointToGround(Vector(math.random(SceneMan.SceneWidth), 0), 0, 1)
@@ -1059,7 +1059,7 @@ function VoidWanderers:SaveFogOfWarState(config)
 		local digitsYTotal = math.max(math.floor(math.log10(wy)), 0)
 
 		for y = 0, wy do
-			str = ""
+			local str = ""
 			for x = 0, wx do
 				tiles = tiles + 1
 				if SceneMan:IsUnseen(x * CF.FogOfWarResolution, y * CF.FogOfWarResolution, CF.PlayerTeam) then
@@ -3040,7 +3040,7 @@ function VoidWanderers:GiveRandomExplorationReward()
 		text[1] = "Bank account access codes found.\n" .. tostring(amount) .. "oz of gold received."
 	elseif r == rewards.experience then
 		local exppts = math.floor(math.random(self.MissionDifficulty * 75, self.MissionDifficulty * 150))
-		levelup = CF.GiveExp(self.GS, exppts)
+		local levelup = CF.GiveExp(self.GS, exppts)
 
 		text = {}
 		text[1] = "Captain's log found. " .. exppts .. " exp gained."
@@ -3088,9 +3088,9 @@ function VoidWanderers:GiveRandomExperienceReward(diff)
 		exppts = CF.CalculateReward(diff, 250)
 	end
 
-	levelup = CF.GiveExp(self.GS, exppts)
+	local levelup = CF.GiveExp(self.GS, exppts)
 
-	text = {}
+	local text = {}
 	text[1] = tostring(exppts) .. " exp gained."
 
 	if levelup then

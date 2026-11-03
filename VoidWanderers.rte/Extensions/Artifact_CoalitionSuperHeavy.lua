@@ -8,7 +8,7 @@
 if PresetMan:GetModuleID("CoalitionHeavy.rte") ~= -1 then
 	-- Add coalition unit to coalition faction
 	local factionid = "Coalition"
-	i = #CF["ActNames"][factionid] + 1
+	local i = #CF["ActNames"][factionid] + 1
 	CF["ActNames"][factionid][i] = "Soldier SuperHeavy"
 	CF["ActPresets"][factionid][i] = "Soldier SuperHeavy"
 	CF["ActModules"][factionid][i] = "CoalitionHeavy.rte"

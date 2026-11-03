@@ -77,7 +77,7 @@ function VoidWanderers:MissionCreate()
 	end
 
 	if snipers ~= nil and #snipers > 0 then
-		self.MissionWeapons[#self.MissionWeapons + 1] = sniper
+		self.MissionWeapons[#self.MissionWeapons + 1] = snipers
 	end
 
 	if pistols ~= nil and #pistols > 0 then

@@ -38,7 +38,7 @@ function VoidWanderers:MissionCreate()
 		end
 	end
 
-	p1 = selection[math.random(#selection)]
+	local p1 = selection[math.random(#selection)]
 
 	-- Next we should select not p1 and not player faction if relations are good enough
 	local selection = {}
@@ -54,7 +54,7 @@ function VoidWanderers:MissionCreate()
 		end
 	end
 
-	p2 = selection[math.random(#selection)]
+	local p2 = selection[math.random(#selection)]
 
 	local diff = CF.GetLocationDifficulty(self.GS, self.GS["Location"])
 
@@ -119,6 +119,7 @@ function VoidWanderers:MissionCreate()
 	self.MissionNextDropShip = self.Time + CF.AmbientReinforcementsInterval
 
 	-- Find player's enemy
+	local rep
 	self.AngriestPlayer, rep = CF.GetAngriestPlayer(self.GS)
 	if self.AngriestPlayer ~= nil then
 		if self.AngriestPlayer ~= p1 and self.AngriestPlayer ~= p2 then

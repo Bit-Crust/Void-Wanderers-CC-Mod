@@ -532,7 +532,7 @@ function VoidWanderers:ProcessLZControlPanelUI()
 					self.BombsControlPanelSelectedItem = 1
 
 					self.Bombs = CF.GetBombsArray(self.GS)
-					n = #self.Bombs + 1
+					local n = #self.Bombs + 1
 					self.Bombs[n] = {}
 					self.Bombs[n]["Preset"] = "Request orbital strike"
 					self.Bombs[n]["Class"] = ""

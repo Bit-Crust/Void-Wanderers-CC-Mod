@@ -20,7 +20,7 @@ function VoidWanderers:MissionCreate()
 	end
 
 	-- Select random player
-	p1 = math.random(tonumber(self.GS["ActiveCPUs"]))
+	local p1 = math.random(tonumber(self.GS["ActiveCPUs"]))
 
 	-- Next we should select not p1
 	local selection = {}
@@ -30,7 +30,7 @@ function VoidWanderers:MissionCreate()
 		end
 	end
 
-	p2 = selection[math.random(#selection)]
+	local p2 = selection[math.random(#selection)]
 
 	CF["CreateAIUnitPresets"](self.GS, p1, CF["GetTechLevelFromDifficulty"](self.GS, p1, diff, CF["MaxDifficulty"]))
 	CF["CreateAIUnitPresets"](self.GS, p2, CF["GetTechLevelFromDifficulty"](self.GS, p2, diff, CF["MaxDifficulty"]))

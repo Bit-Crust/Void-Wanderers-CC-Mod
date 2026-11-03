@@ -363,7 +363,7 @@ CF.InitFactions = function(activity)
 	-- Load factions data
 	for i = 1, #CF["FactionFiles"] do
 		--print("Loading "..CF["FactionFiles"][i])
-		f = loadfile(CF["FactionFiles"][i])
+		local f = loadfile(CF["FactionFiles"][i])
 		if f ~= nil then
 			local lastfactioncount = #CF["Factions"]
 
@@ -396,32 +396,32 @@ CF.InitFactions = function(activity)
 				for i = 1, #CF["ItmNames"][id] do
 					if CF["ItmModules"][id][i] == nil then
 						factionok = false
-						err = "CF["ItmModules"] is missing."
+						err = "CF['ItmModules'] is missing."
 					end
 
 					if CF["ItmPrices"][id][i] == nil then
 						factionok = false
-						err = "CF["ItmPrices"] is missing."
+						err = "CF['ItmPrices'] is missing."
 					end
 
 					if CF["ItmDescriptions"][id][i] == nil then
 						factionok = false
-						err = "CF["ItmDescriptions"] is missing."
+						err = "CF['ItmDescriptions'] is missing."
 					end
 
 					if CF["ItmUnlockData"][id][i] == nil then
 						factionok = false
-						err = "CF["ItmUnlockData"] is missing."
+						err = "CF['ItmUnlockData'] is missing."
 					end
 
 					if CF["ItmTypes"][id][i] == nil then
 						factionok = false
-						err = "CF["ItmTypes"] is missing."
+						err = "CF['ItmTypes'] is missing."
 					end
 
 					if CF["ItmPowers"][id][i] == nil then
 						factionok = false
-						err = "CF["ItmPowers"] is missing."
+						err = "CF['ItmPowers'] is missing."
 					end
 
 					-- If something is wrong then disable faction and print error message
@@ -1170,7 +1170,7 @@ CF["ReplaceLimbs"] = function(actor, limbs)
 			end
 			for i = #CF["LimbID"] + 1, #CF["LimbID"] + #limbs do
 				local limbString = limbs[i]
-				newLimb = CreateAttachable(limbString)
+				local newLimb = CreateAttachable(limbString)
 				if newLimb == nil then
 					print("This is fine, trying to find attachable as HeldDevice...")
 					newLimb = CreateHeldDevice(limbString)

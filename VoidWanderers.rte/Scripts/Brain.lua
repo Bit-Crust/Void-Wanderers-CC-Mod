@@ -837,7 +837,7 @@ function Update(self)
 				local d = SceneMan:ShortestDistance(self.Pos, actor.Pos, SceneMan.SceneWrapsX).Magnitude
 				if d <= dist then
 					if actor.Health < healThreshold then
-						a = actor
+						nearestTarget = actor
 						dist = d
 						healThreshold = actor.Health
 					end
@@ -919,7 +919,7 @@ function do_rpgbrain_shield(self)
 						local pressureIncrement = ((projectile.Mass * massindex) * projectile.Vel.Magnitude) * math.cos(tempVel.AbsRadAngle)
 						pressureTotal = pressureTotal + pressureIncrement
 
-						glowIndex = math.min(math.floor(pressureIncrement * 0.1), 15)
+						local glowIndex = math.min(math.floor(pressureIncrement * 0.1), 15)
 						for i = 1, math.sqrt(glowIndex) do
 							local glowNumb = math.random(glowIndex)
 							local pix = CreateMOPixel("Purple Glow " .. tostring(glowNumb), "VoidWanderers.rte")

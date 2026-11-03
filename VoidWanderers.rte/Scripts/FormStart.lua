@@ -85,7 +85,7 @@ end
 --
 -----------------------------------------------------------------------------------------
 function VoidWanderers:BtnContinueGame_OnClick()
-	config = CF.ReadConfigFile(self.ModuleName, STATE_CONFIG_FILE)
+	local config = CF.ReadConfigFile(self.ModuleName, STATE_CONFIG_FILE)
 	self:LaunchScript(config["Scene"], "Tactics.lua")
 
 	--self:FormClose()

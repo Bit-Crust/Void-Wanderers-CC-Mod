@@ -94,5 +94,15 @@
 	- brains no longer flash the screen red when nothing is wrong
 	- any unit can recieve brain powers
 
-10/31/2026
+10/2026
 	- fixed mining mission allied dropships never delivering troops (dropships were in mining ai mode)
+11/2026
+	- fixed brains losing their items when resuming a co-op save with fewer players
+	- fixed ai brains never healing nearby actors
+	- fixed pre-equipped factions being issued an extra rifle
+	- fixed incomplete faction's item data failing gracelessly
+	- fixed brains being given fallback weapons from another faction's list
+	- fixed sniper rifles never appearing in zombie mission weapon lists
+	- fixed gaps in the selected cpu factions breaking a new game
+	- fixed scene editor cursor always starting at brain instead of controlled actor
+	- cleaned up accidental global variables

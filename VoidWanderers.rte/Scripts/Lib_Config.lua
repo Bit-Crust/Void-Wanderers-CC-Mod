@@ -46,7 +46,7 @@ CF["ReadFactionsList"] = function(filename, defaultpath)
 						if CF["IsFilePathExists"](supportpath) then
 							print("SUPPORT " .. supportpath .. " FOUND, EXECUTING")
 							local paths
-							f = loadfile(supportpath)
+							local f = loadfile(supportpath)
 							if f ~= nil then
 								paths = f()
 
@@ -85,8 +85,8 @@ CF["ReadExtensionsList"] = function(filename, defaultpath)
 	local fileid = LuaMan:FileOpen(filename, "r")
 
 	while not LuaMan:FileEOF(fileid) do
-		line = LuaMan:FileReadLine(fileid)
-		s = string.gsub(line, "\n", "")
+		local line = LuaMan:FileReadLine(fileid)
+		local s = string.gsub(line, "\n", "")
 		s = string.gsub(s, "\r", "")
 
 		local enabled = false
@@ -102,7 +102,7 @@ CF["ReadExtensionsList"] = function(filename, defaultpath)
 				if CF["IsFilePathExists"](supportpath) then
 					print("EXTENSION SUPPORT " .. supportpath .. " FOUND, EXECUTING")
 					local paths
-					f = loadfile(supportpath)
+					local f = loadfile(supportpath)
 					if f ~= nil then
 						paths = f()
 
@@ -137,7 +137,7 @@ end
 CF["ParseLine"] = function(s)
 	local pos1, pos2
 
-	pos = string.find(s, "=")
+	local pos = string.find(s, "=")
 
 	if pos ~= nil then
 		local param, value
@@ -161,7 +161,7 @@ CF["ReadConfigFile"] = function(modulename, filename)
 	local f = LuaMan:FileOpen("Mods/" .. modulename .. "/CampaignData/" .. filename, "r")
 
 	while not LuaMan:FileEOF(f) do
-		line = LuaMan:FileReadLine(f)
+		local line = LuaMan:FileReadLine(f)
 		local param, value
 
 		param, value = CF["ParseLine"](line)
@@ -190,7 +190,7 @@ CF["ReadSceneConfigFile"] = function(modulename, filename)
 		local f = LuaMan:FileOpen(filepath, "r")
 
 		while not LuaMan:FileEOF(f) do
-			line = LuaMan:FileReadLine(f)
+			local line = LuaMan:FileReadLine(f)
 			local param, value
 
 			param, value = CF["ParseLine"](line)

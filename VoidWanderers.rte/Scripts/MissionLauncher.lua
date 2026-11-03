@@ -1,9 +1,9 @@
 function VoidWanderers:StartActivity()
 	-- TODO: Remove by pre 7, make em figure it out themselves
 	-- Localize substring function so that we're not indexing any tables in the table indexing handler
-	sub = string.sub
+	local sub = string.sub
 
-	mt = {}
+	local mt = {}
 	
 	-- Intercept indexes to CF_ anything and route them to the table instead
 	mt.__index = function(table, key)

@@ -288,13 +288,15 @@ function VoidWanderers:BtnOk_OnClick()
 	player = self.FactionButtons[self.SelectedPlayerFaction]["FactionId"]
 	local j = 0
 
+	-- Close any gaps left by deselected factions so the chosen ones fill consecutive slots
+	local selectedCPUFactions = {}
 	for i = 1, self.MaxCPUPlayersSelectable do
-		if (self.SelectedCPUFactions[i] == 0) then
-			table.remove(self.SelectedCPUFactions, i)
-			print("Removing team " .. i)
-			self.SelectedCPUFactions[self.MaxCPUPlayersSelectable] = 0
-			i = i - 1
+		if self.SelectedCPUFactions[i] ~= 0 then
+			selectedCPUFactions[#selectedCPUFactions + 1] = self.SelectedCPUFactions[i]
 		end
+	end
+	for i = 1, self.MaxCPUPlayersSelectable do
+		self.SelectedCPUFactions[i] = selectedCPUFactions[i] or 0
 	end
 
 	cpu[1] = player

@@ -113,9 +113,7 @@ CF.MakeBrainWithPreset = function(c, p, team, pos, preset, class, module, giveWe
 
 			if weaponsgiven == 0 then
 				-- If we didn't get any weapins try to give other weapons, rifles
-				if weaps == nil then
-					weaps = CF.MakeListOfMostPowerfulWeapons(c, p, CF.WeaponTypes.RIFLE, 100000)
-				end
+				local weaps = CF.MakeListOfMostPowerfulWeapons(c, p, CF.WeaponTypes.RIFLE, 100000)
 
 				-- Sniper rifles
 				if weaps == nil then
@@ -235,7 +233,7 @@ CF.SpawnRandomInfantry = function(team, pos, faction, aimode)
 			local preequipped = false
 
 			if CF["PreEquippedActors"][faction] ~= nil and CF["PreEquippedActors"][faction] then
-				preequpped = true
+				preequipped = true
 			end
 
 			if not preequipped then

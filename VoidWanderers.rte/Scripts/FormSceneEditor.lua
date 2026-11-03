@@ -290,7 +290,7 @@ function VoidWanderers:MissionType_OnClick()
 
 	-- Fill sets
 	for i = 1, CF["MissionMaxSets"][self.SelectedType] do
-		el = {}
+		local el = {}
 		el["Type"] = self.ElementTypes.BUTTON
 		el["Presets"] = {}
 		el["Presets"][self.ButtonStates.IDLE] = "ButtonSceneEditorIdle"
@@ -317,7 +317,7 @@ function VoidWanderers:MissionType_OnClick()
 
 	-- Fill point types
 	for i = 1, #CF["MissionRequiredData"][self.SelectedType] do
-		el = {}
+		local el = {}
 		el["Type"] = self.ElementTypes.BUTTON
 		el["Presets"] = {}
 		el["Presets"][self.ButtonStates.IDLE] = "ButtonSceneEditorWideIdle"
@@ -376,7 +376,7 @@ function VoidWanderers:PointType_OnClick()
 
 	-- Fill sets
 	for i = 1, CF["MissionRequiredData"][self.SelectedType][self.SelectedPointType]["Max"] do
-		el = {}
+		local el = {}
 		el["Type"] = self.ElementTypes.BUTTON
 		el["Presets"] = {}
 		el["Presets"][self.ButtonStates.IDLE] = "ButtonSceneEditorIdle"

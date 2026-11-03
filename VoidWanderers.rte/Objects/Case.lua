@@ -80,6 +80,7 @@ function Create(self)
 				local itmindex = weaps[r]["Item"]
 				itm = CF_Call(self, {"MakeItem"}, {itmPresets[f][itmindex], itmClasses[f][itmindex], itmModules[f][itmindex]})[1]:Clone()
 			end
+
 			if itm then
 				itm.AngularVel = 0
 				itm.Vel = Vector(0, -3)

@@ -2524,6 +2524,27 @@ function VoidWanderers:UpdateActivity()
 	self:CheckWinningConditions()
 	self:YSortObjectivePoints()
 
+	-- Dead units stop colliding with other actors so that they can be stepped past instead of trampled.
+	-- Bullets aren't actors, so bodies still absorb shots.
+	for particle in MovableMan.Particles do
+		if (IsAHuman(particle) or IsACrab(particle)) and not particle:NumberValueExists("VW_Passable") then
+			local body = ToActor(particle)
+			if body:IsDead() then
+				body:SetNumberValue("VW_Passable", body.IgnoresActorHits and 1 or 0)
+				body.IgnoresActorHits = true
+			end
+		end
+	end
+
+	-- A revived unit is a clone of its body, so it inherits all of the above. Revival happens during
+	-- MovableMan's update, which also empties AddedActors, so it has to be caught here instead.
+	for actor in MovableMan.Actors do
+		if actor:NumberValueExists("VW_Passable") then
+			actor.IgnoresActorHits = actor:GetNumberValue("VW_Passable") == 1
+			actor:RemoveNumberValue("VW_Passable")
+		end
+	end
+
 	for actor in MovableMan.AddedActors do
 		-- No dead unit settles immediately, TODO enable meat shielding by allowing you to pick them up
 		if IsAHuman(actor) or IsACrab(actor) and actor.Status ~= Actor.STABLE then

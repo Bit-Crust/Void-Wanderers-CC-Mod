@@ -108,3 +108,4 @@
 	- cleaned up accidental global variables
 	- worked around base game scrambling inventory order when scrolling backwards and during ai item swaps
 	- worked around base game not returning offhand items after crawling or climbing
+	- dead units no longer collide with other actors, so they can be stepped past instead of trampled

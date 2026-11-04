@@ -2553,6 +2553,13 @@ function VoidWanderers:UpdateActivity()
 			else
 				actor:AddScript("VoidWanderers.rte/Scripts/Carry.lua")
 			end
+			if IsAHuman(actor) then
+				if actor:HasScript("VoidWanderers.rte/Scripts/InventoryOrder.lua") then
+					actor:EnableScript("VoidWanderers.rte/Scripts/InventoryOrder.lua")
+				else
+					actor:AddScript("VoidWanderers.rte/Scripts/InventoryOrder.lua")
+				end
+			end
 			if actor:GetNumberValue("VW_Prestige") ~= 0 then
 				if actor:HasScript("Base.rte/Actors/Shared/Scripts/SelfHeal.lua") then
 					actor:EnableScript("Base.rte/Actors/Shared/Scripts/SelfHeal.lua")

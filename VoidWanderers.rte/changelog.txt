@@ -106,3 +106,5 @@
 	- fixed gaps in the selected cpu factions breaking a new game
 	- fixed scene editor cursor always starting at brain instead of controlled actor
 	- cleaned up accidental global variables
+	- worked around base game scrambling inventory order when scrolling backwards and during ai item swaps
+	- worked around base game not returning offhand items after crawling or climbing

@@ -24,12 +24,18 @@ function Update(self)
 				4
 			)
 			local actor = moCheck == rte.NoMOID and parent or MovableMan:GetMOFromID(moCheck)
+			local human = actor and IsAHuman(actor:GetRootParent()) and ToAHuman(actor:GetRootParent())
+			local isHead = string.find(self.PresetName, " Head")
 			if
-				actor
-				and IsAHuman(actor:GetRootParent())
-				and CF["AttemptReplaceLimb"](ToAHuman(actor:GetRootParent()), self)
+				human
+				and not (isHead and human.UniqueID ~= parent.UniqueID and CF["RefuseBrain"](human, parent))
+				and CF["AttemptReplaceLimb"](human, self)
 			then
-				ToAHuman(actor:GetRootParent()):FlashWhite(50)
+				-- Allegiance lives in the head, so a dead unit belongs to whoever gives it a new one
+				if isHead and human:IsDead() then
+					human.Team = parent.Team
+				end
+				human:FlashWhite(50)
 				self.attachSound:Play(self.Pos)
 				self:GetParent():RemoveAttachable(self, false, false)
 			else

@@ -1219,6 +1219,27 @@ end
 -----------------------------------------------------------------------------------------
 --
 -----------------------------------------------------------------------------------------
+-- A brain is whoever a mission designates as one or who runs the brain script, not whoever the
+-- engine's "Brains" group says could serve as one. A recruited general is just a very good unit.
+CF["IsBrain"] = function(actor)
+	return actor:IsInGroup("MissionBrain") or actor:HasScript("VoidWanderers.rte/Scripts/Brain.lua")
+end
+-----------------------------------------------------------------------------------------
+--
+-----------------------------------------------------------------------------------------
+CF["RefuseBrain"] = function(actor, user)
+	if not CF["IsBrain"](actor) then
+		return false
+	end
+
+	local effect = CreateMOPixel("Are you crazy?", CF["ModuleName"])
+	effect.Pos = user.AboveHUDPos + Vector(0, -8)
+	MovableMan:AddParticle(effect)
+	return true
+end
+-----------------------------------------------------------------------------------------
+--
+-----------------------------------------------------------------------------------------
 CF["AttemptReplaceLimb"] = function(actor, limb)
 	local j = 0
 	local isArm = string.find(limb.PresetName, " Arm")
@@ -1229,7 +1250,8 @@ CF["AttemptReplaceLimb"] = function(actor, limb)
 		j = not actor.FGArm and 1 or (not actor.BGArm and 2 or j)
 	elseif isLeg then
 		j = not actor.FGLeg and 3 or (not actor.BGLeg and 4 or j)
-	elseif isHead and actor.Head == nil then
+	elseif isHead and actor.Head == nil and not CF["IsBrain"](actor) then
+		-- A brain's head is the brain, so losing it is the end. No replacing that.
 		j = 5
 	end
 	if j ~= 0 then

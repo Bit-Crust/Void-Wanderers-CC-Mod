@@ -28,7 +28,12 @@ function Update(self)
 				if target and IsAHuman(target:GetRootParent()) then
 					local human = ToAHuman(target:GetRootParent())
 
-					if human:IsDead() and human.Team ~= parent.Team then
+					if
+						not CF["RefuseBrain"](human, parent)
+						and human:IsDead()
+						and human.Team ~= parent.Team
+						and human.Head
+					then
 						human:FlashWhite(50)
 						self.attachSound:Play(human.Pos)
 						self:GetParent():RemoveAttachable(self, false, false)

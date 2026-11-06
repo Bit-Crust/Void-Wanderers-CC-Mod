@@ -107,3 +107,9 @@
 	- fixed scene editor cursor always starting at brain instead of controlled actor
 	- cleaned up accidental global variables
 	- dead units no longer collide with other actors, so they can be stepped past instead of trampled
+	- black market exclusives are now a short fixed list, so prosthetics and heads turn up far more often, regardless of installed mods
+	- black market items now appear under their proper shop filters, prosthetics and heads under tools, and only tools under tools
+	- prosthetics and heads cost more at the black market
+	- black market lists more faction items
+	- black market artifact stock survives changes to installed mods
+	- prosthetic limbs and replacement heads can now be found as quantum schemes

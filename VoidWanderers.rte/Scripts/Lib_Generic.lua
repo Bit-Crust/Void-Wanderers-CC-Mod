@@ -24,6 +24,9 @@ CF.InitFactions = function(activity)
 
 	CF.BlackMarketRefreshInterval = 1200
 	CF.BlackMarketPriceMultiplier = 3
+	-- How readily faction stock gets listed. The list grows with roughly the square root of this.
+	CF.BlackMarketItemVariety = 1
+	CF.BlackMarketCloneVariety = 0.4
 
 	CF.MissionResultShowInterval = 10
 
@@ -298,6 +301,20 @@ CF.InitFactions = function(activity)
 		GRENADE = 7,
 		TOOL = 8,
 		BOMB = 9,
+	}
+	-- When an item is in several of these groups, the last one decides its type.
+	CF["WeaponGroups"] = {
+		{ "Weapons - Light", CF["WeaponTypes"].RIFLE },
+		{ "Weapons - Heavy", CF["WeaponTypes"].HEAVY },
+		{ "Weapons - Sniper", CF["WeaponTypes"].SNIPER },
+		{ "Weapons - Shotguns", CF["WeaponTypes"].SHOTGUN },
+		{ "Weapons - Secondary", CF["WeaponTypes"].PISTOL },
+		{ "Weapons - Melee", CF["WeaponTypes"].PISTOL }, -- Force melee weapons as "Secondary"
+		{ "Tools", CF["WeaponTypes"].TOOL },
+		{ "Tools - Diggers", CF["WeaponTypes"].DIGGER },
+		{ "Shields", CF["WeaponTypes"].SHIELD },
+		{ "Bombs", CF["WeaponTypes"].GRENADE },
+		{ "Bombs - Grenades", CF["WeaponTypes"].GRENADE },
 	}
 	CF["ActorTypes"] = { ANY = -1, LIGHT = 0, HEAVY = 1, ARMOR = 2, TURRET = 3 }
 	CF["FactionTypes"] = { ORGANIC = 0, SYNTHETIC = 1 }
@@ -874,6 +891,13 @@ CF["ConvertTimeToString"] = function(timenum)
 	return timestr
 end
 -----------------------------------------------------------------------------------------
+-- Round a number up, keeping <digits> digits after the leading one
+----------------------------------------------------------------------
+CF["TruncateNumber"] = function(value, digits)
+	local digitFactor = math.pow(10, math.max(0, math.floor(math.log10(value)) - digits))
+	return math.ceil(value / digitFactor) * digitFactor
+end
+----------------------------------------------------------------------
 -- Make item of specified preset, module and class
 -----------------------------------------------------------------------------------------
 CF["MakeItem"] = function(preset, class, module)

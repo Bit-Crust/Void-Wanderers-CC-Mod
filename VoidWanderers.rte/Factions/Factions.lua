@@ -1,16 +1,4 @@
-local weaponGroups = {
-	{ "Weapons - Light", CF["WeaponTypes"].RIFLE },
-	{ "Weapons - Heavy", CF["WeaponTypes"].HEAVY },
-	{ "Weapons - Sniper", CF["WeaponTypes"].SNIPER },
-	{ "Weapons - Shotguns", CF["WeaponTypes"].SHOTGUN },
-	{ "Weapons - Secondary", CF["WeaponTypes"].PISTOL },
-	{ "Weapons - Melee", CF["WeaponTypes"].PISTOL }, -- Force melee weapons as "Secondary" but not as starter secondary
-	{ "Tools", CF["WeaponTypes"].TOOL },
-	{ "Tools - Diggers", CF["WeaponTypes"].DIGGER },
-	{ "Shields", CF["WeaponTypes"].SHIELD },
-	{ "Bombs", CF["WeaponTypes"].GRENADE },
-	{ "Bombs - Grenades", CF["WeaponTypes"].GRENADE },
-}
+local weaponGroups = CF["WeaponGroups"]
 local actorGroups = {
 	{ "Actors - Light", CF["ActorTypes"].LIGHT },
 	{ "Actors - Heavy", CF["ActorTypes"].HEAVY },

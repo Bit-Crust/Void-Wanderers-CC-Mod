@@ -120,6 +120,7 @@ CF["InitExtensionsData"] = function(activity)
 	CF["BlackMarketItmClasses"] = {}
 	CF["BlackMarketItmPrices"] = {}
 	CF["BlackMarketItmDescriptions"] = {}
+	CF["BlackMarketItmTypes"] = {}
 
 	-- Quantum items
 	CF["QuantumItems"] = {}

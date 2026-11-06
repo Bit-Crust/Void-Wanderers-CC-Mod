@@ -267,208 +267,194 @@ end
 -----------------------------------------------------------------------------------------
 --
 -----------------------------------------------------------------------------------------
+local function clearBlackMarketStock(gs, prefix, count)
+	for i = 1, tonumber(count) or 0 do
+		gs[prefix .. i .. "Class"] = nil
+		gs[prefix .. i .. "Preset"] = nil
+		gs[prefix .. i .. "Module"] = nil
+		gs[prefix .. i .. "Faction"] = nil
+		gs[prefix .. i .. "Index"] = nil
+	end
+end
+
+local function getStockKey(class, preset, module)
+	return class .. "_" .. preset .. "_" .. module
+end
+
+local function restockBlackMarketItems(gs, loc)
+	local prefix = "BlackMarket" .. loc .. "Item"
+	local listed = {}
+	local count = 0
+
+	clearBlackMarketStock(gs, prefix, gs["BlackMarket" .. loc .. "ItemCount"])
+
+	-- Exclusives are stored by index alone
+	if #CF["BlackMarketItmPresets"] > 0 then
+		for i = 1, math.random(math.floor(math.sqrt(#CF["BlackMarketItmPresets"]))) do
+			local index = math.random(#CF["BlackMarketItmPresets"])
+			local key = getStockKey(
+				CF["BlackMarketItmClasses"][index],
+				CF["BlackMarketItmPresets"][index],
+				CF["BlackMarketItmModules"][index]
+			)
+
+			if math.random() < (1 / i) and not listed[key] then
+				count = count + 1
+				gs[prefix .. count .. "Index"] = index
+				listed[key] = true
+			end
+		end
+	end
+
+	-- Artifacts are stored by name, since their indices change along with the installed mods
+	local function addArtifact(index)
+		local class = CF["ArtItmClasses"][index] or "HDFirearm"
+		local preset = CF["ArtItmPresets"][index]
+		local module = CF["ArtItmModules"][index]
+		local key = getStockKey(class, preset, module)
+
+		if not listed[key] then
+			count = count + 1
+			gs[prefix .. count .. "Class"] = class
+			gs[prefix .. count .. "Preset"] = preset
+			gs[prefix .. count .. "Module"] = module
+			listed[key] = true
+		end
+	end
+
+	if #CF["ArtItmPresets"] > 0 then
+		for index = 1, #CF["ArtItmPresets"] do
+			if gs["UnlockedItmBlackprint_" .. CF["ArtItmPresets"][index]] then
+				addArtifact(index)
+			end
+		end
+
+		for i = 1, math.random(math.floor(math.sqrt(#CF["ArtItmPresets"]))) do
+			local index = math.random(#CF["ArtItmPresets"])
+
+			if math.random() < (1 / i) then
+				addArtifact(index)
+			end
+		end
+	end
+
+	-- Items of participating factions are stored by faction and index
+	for i = 1, tonumber(gs["ActiveCPUs"]) do
+		local f = CF["GetPlayerFaction"](gs, i)
+
+		for index = 1, #CF["ItmNames"][f] do
+			local preset = CF["ItmPresets"][f][index]
+
+			if preset and (CF["ItmPowers"][f][index] == 0 or CF["ItmPowers"][f][index] > math.random(4, 6)) then
+				local key = getStockKey(CF["ItmClasses"][f][index] or "HDFirearm", preset, CF["ItmModules"][f][index])
+
+				if math.random() < (CF["BlackMarketItemVariety"] / (count + 1)) and not listed[key] then
+					count = count + 1
+					gs[prefix .. count .. "Faction"] = f
+					gs[prefix .. count .. "Index"] = index
+					listed[key] = true
+				end
+			end
+		end
+	end
+
+	gs["BlackMarket" .. loc .. "ItemCount"] = count
+	gs["BlackMarket" .. loc .. "ItemsLastRefresh"] = gs["Time"]
+end
+
+local function getBlackMarketPrice(value, fundFactor, minimum)
+	return math.max(CF["TruncateNumber"](value * CF["BlackMarketPriceMultiplier"] + fundFactor, 1), minimum)
+end
+
+-- Artifacts aren't typed by hand, so go by the same groups that faction items are typed by.
+local function getArtifactType(entity, class)
+	if class == "TDExplosive" then
+		return CF["WeaponTypes"].GRENADE
+	end
+
+	local itemType = entity:IsInGroup("Weapons") and CF["WeaponTypes"].RIFLE or nil
+	for _, group in ipairs(CF["WeaponGroups"]) do
+		if entity:IsInGroup(group[1]) then
+			itemType = group[2]
+		end
+	end
+	return itemType
+end
+
 CF["GetItemBlackMarketArray"] = function(gs, makefilters)
-	-- Find out if we need to create a list of available items for this black market
 	local loc = gs["Location"]
-	local tocreate = gs["BlackMarket" .. loc .. "ItemsLastRefresh"] == nil
-		or tonumber(gs["BlackMarket" .. loc .. "ItemsLastRefresh"]) + CF["BlackMarketRefreshInterval"]
-			< tonumber(gs["Time"])
+	local prefix = "BlackMarket" .. loc .. "Item"
+	local count = tonumber(gs["BlackMarket" .. loc .. "ItemCount"]) or 0
+	local lastRefresh = tonumber(gs["BlackMarket" .. loc .. "ItemsLastRefresh"])
+	local tocreate = lastRefresh == nil or lastRefresh + CF["BlackMarketRefreshInterval"] < tonumber(gs["Time"])
 
-	local arr = {}
+	-- Stock from older saves names exclusives as a faction, and its indices point into a longer list
+	for i = 1, count do
+		if gs[prefix .. i .. "Faction"] == "Black Market" then
+			tocreate = true
+			break
+		end
+	end
 
-	-- Create list of items available in blackmarket
 	if tocreate then
-		local count = 0
-
-		-- Add Black Market exclusives
-		if #CF["BlackMarketItmPresets"] > 0 then
-			for i = 1, math.random(math.floor(math.sqrt(#CF["BlackMarketItmPresets"]))) do
-				local itm = math.random(#CF["BlackMarketItmPresets"])
-				local isduplicate = false
-				for j = 1, #arr do
-					if CF["BlackMarketItmPresets"][itm] == arr[j]["Preset"] then
-						isduplicate = true
-						break
-					end
-				end
-				if CF["BlackMarketItmPresets"][itm] and math.random() < (1 / i) and not isduplicate then
-					count = count + 1
-					gs["BlackMarket" .. loc .. "Item" .. count .. "Faction"] = "Black Market" --nil
-					gs["BlackMarket" .. loc .. "Item" .. count .. "Index"] = itm
-
-					-- Store descriptions to get rid of duplicates
-					arr[count] = {}
-					arr[count]["Description"] = CF["BlackMarketItmDescriptions"][itm]
-					arr[count]["Preset"] = CF["BlackMarketItmPresets"][itm]
-					arr[count]["Module"] = CF["BlackMarketItmModules"][itm]
-				end
-			end
-		end
-		-- Add random artifact items into the listing
-		if #CF["ArtItmPresets"] > 0 then
-			for itm = 1, #CF["ArtItmPresets"] do
-				if gs["UnlockedItmBlackprint_" .. CF["ArtItmPresets"][itm]] then
-					count = count + 1
-					gs["BlackMarket" .. loc .. "Item" .. count .. "Faction"] = nil
-					gs["BlackMarket" .. loc .. "Item" .. count .. "Index"] = itm
-
-					arr[count] = {}
-					arr[count]["Description"] = CF["ArtItmDescriptions"][itm]
-					arr[count]["Preset"] = CF["ArtItmPresets"][itm]
-					arr[count]["Module"] = CF["ArtItmModules"][itm]
-				end
-			end
-			for i = 1, math.random(math.floor(math.sqrt(#CF["ArtItmPresets"]))) do
-				local itm = math.random(#CF["ArtItmPresets"])
-				local isduplicate = false
-				for j = 1, #arr do
-					if CF["ArtItmPresets"][itm] == arr[j]["Preset"] then
-						isduplicate = true
-						break
-					end
-				end
-				if CF["ArtItmPresets"][itm] and math.random() < (1 / i) and not isduplicate then
-					count = count + 1
-					gs["BlackMarket" .. loc .. "Item" .. count .. "Faction"] = nil --PresetMan:GetDataModule(PresetMan:GetModuleID(CF["ArtItmModules"][itm])).FriendlyName
-					gs["BlackMarket" .. loc .. "Item" .. count .. "Index"] = itm
-
-					-- Store descriptions to get rid of duplicates
-					arr[count] = {}
-					arr[count]["Description"] = CF["ArtItmDescriptions"][itm]
-					arr[count]["Preset"] = CF["ArtItmPresets"][itm]
-					arr[count]["Module"] = CF["ArtItmModules"][itm]
-				end
-			end
-		end
-		for i = 1, tonumber(gs["ActiveCPUs"]) do
-			local f = CF["GetPlayerFaction"](gs, i)
-
-			for itm = 1, #CF["ItmNames"][f] do
-				local isduplicate = false
-
-				for j = 1, #arr do
-					if
-						CF["ItmDescriptions"][f][itm] == arr[j]["Description"]
-						and CF["ItmPresets"][f][itm] == arr[j]["Preset"]
-					then
-						isduplicate = true
-						break
-					end
-				end --]]--
-
-				if
-					CF["ItmPresets"][f][itm]
-					and (CF["ItmPowers"][f][itm] == 0 or CF["ItmPowers"][f][itm] > math.random(4, 6))
-					and math.random() < (0.3 / (count + 1))
-					and not isduplicate
-				then
-					count = count + 1
-					gs["BlackMarket" .. loc .. "Item" .. count .. "Faction"] = f
-					gs["BlackMarket" .. loc .. "Item" .. count .. "Index"] = itm
-					-- Store descriptions to get rid of duplicates
-					arr[count] = {}
-					arr[count]["Description"] = CF["ItmDescriptions"][f][itm]
-					arr[count]["Preset"] = CF["ItmPresets"][f][itm]
-					arr[count]["Module"] = CF["ItmModules"][f][itm]
-				end
-			end
-		end
-		gs["BlackMarket" .. loc .. "ItemCount"] = count
-		gs["BlackMarket" .. loc .. "ItemsLastRefresh"] = gs["Time"]
+		restockBlackMarketItems(gs, loc)
+		count = tonumber(gs["BlackMarket" .. loc .. "ItemCount"])
 	end
 
 	-- Fill array
-	local count = gs["BlackMarket" .. loc .. "ItemCount"] and tonumber(gs["BlackMarket" .. loc .. "ItemCount"]) or 0
-	arr = {}
+	local arr = {}
 
 	for i = 1, count do
-		local ii = #arr + 1
-		arr[ii] = {}
-		local f = gs["BlackMarket" .. loc .. "Item" .. i .. "Faction"]
-		local itm = tonumber(gs["BlackMarket" .. loc .. "Item" .. i .. "Index"])
-		local funds = math.sqrt(CF["GetPlayerGold"](gs, 0))
+		local item = nil
+		local f = gs[prefix .. i .. "Faction"]
+		local index = tonumber(gs[prefix .. i .. "Index"])
+		local fundFactor = math.sqrt(CF["GetPlayerGold"](gs, 0)) * RangeRand(0.5, 0.75) * CF["BlackMarketPriceMultiplier"]
 
 		if f then
-			if f == "Black Market" then
-				arr[ii]["Faction"] = CF["BlackMarketItmModules"][itm] == CF["ModuleName"] and "Black Market" or nil
-				arr[ii]["Index"] = itm
-
-				arr[ii]["Preset"] = CF["BlackMarketItmPresets"][itm]
-				arr[ii]["Module"] = CF["BlackMarketItmModules"][itm]
-				arr[ii]["Class"] = CF["BlackMarketItmClasses"][itm] or "HDFirearm"
-				arr[ii]["Description"] = CF["BlackMarketItmDescriptions"][itm] or "DESCRIPTION UNAVAILABLE"
-				local price = (funds * CF["BlackMarketPriceMultiplier"] * RangeRand(0.5, 0.75))
-					+ (CF["BlackMarketItmPrices"][itm] * CF["BlackMarketPriceMultiplier"])
-				if price >= 100 then
-					if price >= 1000 then
-						if price >= 10000 then
-							price = math.floor(price * 0.001) * 1000
-						else
-							price = math.floor(price * 0.01) * 100
-						end
-					else
-						price = math.floor(price * 0.1) * 10
-					end
-				end
-				arr[ii]["Price"] = math.max(math.floor(price), CF["UnknownItemPrice"])
-				--arr[ii]["Type"] = CF["BlackMarketItmTypes"][itm]
-			elseif CF["ItmPresets"][f][itm] then
-				arr[ii]["Faction"] = f
-				arr[ii]["Index"] = itm
-
-				-- In case somebody will change number of items in faction file, check every item
-				arr[ii]["Preset"] = CF["ItmPresets"][f][itm]
-				arr[ii]["Module"] = CF["ItmModules"][f][itm]
-				if CF["ItmClasses"][f][itm] ~= nil then
-					arr[ii]["Class"] = CF["ItmClasses"][f][itm]
-				else
-					arr[ii]["Class"] = "HDFirearm"
-				end
-				arr[ii]["Description"] = CF["ItmDescriptions"][f][itm]
-				local price = (funds * CF["BlackMarketPriceMultiplier"] * RangeRand(0.5, 0.75))
-					+ (CF["ItmPrices"][f][itm] * CF["BlackMarketPriceMultiplier"])
-				if price >= 100 then
-					if price >= 1000 then
-						if price >= 10000 then
-							price = math.floor(price * 0.001) * 1000
-						else
-							price = math.floor(price * 0.01) * 100
-						end
-					else
-						price = math.floor(price * 0.1) * 10
-					end
-				end
-				arr[ii]["Price"] = math.max(math.floor(price), CF["UnknownItemPrice"])
-				arr[ii]["Type"] = CF["ItmTypes"][f][itm]
+			if CF["ItmPresets"][f] and CF["ItmPresets"][f][index] then
+				item = {}
+				item["Faction"] = f
+				item["Preset"] = CF["ItmPresets"][f][index]
+				item["Module"] = CF["ItmModules"][f][index]
+				item["Class"] = CF["ItmClasses"][f][index] or "HDFirearm"
+				item["Description"] = CF["ItmDescriptions"][f][index] or "DESCRIPTION UNAVAILABLE"
+				item["Price"] = getBlackMarketPrice(CF["ItmPrices"][f][index], fundFactor, CF["UnknownItemPrice"])
+				item["Type"] = CF["ItmTypes"][f][index]
 			end
-		else -- No faction = it's an Artifact
-			arr[ii]["Index"] = itm
-
-			arr[ii]["Preset"] = CF["ArtItmPresets"][itm]
-			arr[ii]["Module"] = CF["ArtItmModules"][itm]
-
-			arr[ii]["Class"] = CF["ArtItmClasses"][itm] and CF["ArtItmClasses"][itm] or "HDFirearm"
-
-			arr[ii]["Description"] = CF["ArtItmDescriptions"][itm] or "DESCRIPTION UNAVAILABLE"
-			local multiplier = CF["BlackMarketPriceMultiplier"]
-			if gs["UnlockedItmBlackprint_" .. CF["ArtItmPresets"][itm]] then
-				multiplier = multiplier * 0.5
+		elseif index then
+			if CF["BlackMarketItmPresets"][index] then
+				item = {}
+				item["Faction"] = "Black Market"
+				item["Preset"] = CF["BlackMarketItmPresets"][index]
+				item["Module"] = CF["BlackMarketItmModules"][index]
+				item["Class"] = CF["BlackMarketItmClasses"][index]
+				item["Description"] = CF["BlackMarketItmDescriptions"][index] or "DESCRIPTION UNAVAILABLE"
+				item["Price"] = getBlackMarketPrice(CF["BlackMarketItmPrices"][index], fundFactor, CF["UnknownItemPrice"])
+				item["Type"] = CF["BlackMarketItmTypes"][index]
 			end
-			local price = (funds * multiplier * RangeRand(0.5, 0.75))
-				+ (CF["ArtItmPrices"][itm] and CF["ArtItmPrices"][itm] * multiplier or 1000)
-			if price >= 100 then
-				if price >= 1000 then
-					if price >= 10000 then
-						price = math.floor(price * 0.001) * 1000
-					else
-						price = math.floor(price * 0.01) * 100
-					end
-				else
-					price = math.floor(price * 0.1) * 10
-				end
+		else
+			local class = gs[prefix .. i .. "Class"] or ""
+			local preset = gs[prefix .. i .. "Preset"] or ""
+			local module = gs[prefix .. i .. "Module"] or ""
+			local entity = PresetMan:GetPreset(class, preset, module)
+
+			if entity and IsSceneObject(entity) then
+				entity = ToSceneObject(entity)
+				local multiplier = gs["UnlockedItmBlackprint_" .. preset] and 0.5 or 1
+				local price = getBlackMarketPrice(entity:GetGoldValue(0, 1, 1), fundFactor, CF["UnknownItemPrice"])
+
+				item = {}
+				item["Preset"] = preset
+				item["Module"] = module
+				item["Class"] = class
+				item["Description"] = entity.Description or "DESCRIPTION UNAVAILABLE"
+				item["Price"] = math.floor(price * multiplier)
+				item["Type"] = getArtifactType(entity, class)
 			end
-			arr[ii]["Price"] = math.max(math.floor(price), CF["UnknownItemPrice"])
-			--arr[ii]["Type"] = CF["ItmTypes"][f][itm]
+		end
+
+		if item then
+			arr[#arr + 1] = item
 		end
 	end
 
@@ -624,163 +610,131 @@ end
 -----------------------------------------------------------------------------------------
 --
 -----------------------------------------------------------------------------------------
-CF["GetCloneBlackMarketArray"] = function(gs, makefilters)
-	-- Find out if we need to create a list of available items for this black market
-	local loc = gs["Location"]
-	local tocreate = false
+local function restockBlackMarketActors(gs, loc)
+	local prefix = "BlackMarket" .. loc .. "Actor"
+	local listed = {}
+	local count = 0
 
-	if gs["BlackMarket" .. loc .. "ActorsLastRefresh"] == nil then
-		tocreate = true
-	else
-		local last = tonumber(gs["BlackMarket" .. loc .. "ActorsLastRefresh"])
+	clearBlackMarketStock(gs, prefix, gs["BlackMarket" .. loc .. "ActorsCount"])
 
-		if last + CF["BlackMarketRefreshInterval"] < tonumber(gs["Time"]) then
-			tocreate = true
+	-- Artifacts are stored by name, since their indices change along with the installed mods
+	local function addArtifact(index)
+		local class = CF["ArtActClasses"][index] or "AHuman"
+		local preset = CF["ArtActPresets"][index]
+		local module = CF["ArtActModules"][index]
+		local key = getStockKey(class, preset, module)
+
+		if not listed[key] then
+			count = count + 1
+			gs[prefix .. count .. "Class"] = class
+			gs[prefix .. count .. "Preset"] = preset
+			gs[prefix .. count .. "Module"] = module
+			listed[key] = true
 		end
 	end
 
-	--tocreate = true -- DEBUG
+	if #CF["ArtActPresets"] > 0 then
+		for index = 1, #CF["ArtActPresets"] do
+			if gs["UnlockedActBlackprint_" .. CF["ArtActPresets"][index]] then
+				addArtifact(index)
+			end
+		end
 
-	local arr = {}
+		for i = 1, math.random(math.floor(math.sqrt(#CF["ArtActPresets"]))) do
+			local index = math.random(#CF["ArtActPresets"])
 
-	-- Create list of items available in blackmarket
+			if math.random() < (CF["BlackMarketCloneVariety"] / (count + 1)) then
+				addArtifact(index)
+			end
+		end
+	end
+
+	-- Actors of participating factions are stored by faction and index
+	for i = 1, tonumber(gs["ActiveCPUs"]) do
+		local f = CF["GetPlayerFaction"](gs, i)
+
+		for index = 1, #CF["ActNames"][f] do
+			local preset = CF["ActPresets"][f][index]
+
+			if preset and CF["ActPowers"][f][index] > math.random(4, 6) and CF["ActTypes"][f][index] ~= CF["ActorTypes"].TURRET then
+				local key = getStockKey(CF["ActClasses"][f][index] or "AHuman", preset, CF["ActModules"][f][index])
+
+				if math.random() < (CF["BlackMarketCloneVariety"] / (count + 1)) and not listed[key] then
+					count = count + 1
+					gs[prefix .. count .. "Faction"] = f
+					gs[prefix .. count .. "Index"] = index
+					listed[key] = true
+				end
+			end
+		end
+	end
+
+	gs["BlackMarket" .. loc .. "ActorsCount"] = count
+	gs["BlackMarket" .. loc .. "ActorsLastRefresh"] = gs["Time"]
+end
+
+CF["GetCloneBlackMarketArray"] = function(gs, makefilters)
+	local loc = gs["Location"]
+	local prefix = "BlackMarket" .. loc .. "Actor"
+	local count = tonumber(gs["BlackMarket" .. loc .. "ActorsCount"]) or 0
+	local lastRefresh = tonumber(gs["BlackMarket" .. loc .. "ActorsLastRefresh"])
+	local tocreate = lastRefresh == nil or lastRefresh + CF["BlackMarketRefreshInterval"] < tonumber(gs["Time"])
+
+	-- Stock from older saves stores artifacts by index, and those indices change with the installed mods
+	for i = 1, count do
+		if gs[prefix .. i .. "Index"] and not gs[prefix .. i .. "Faction"] then
+			tocreate = true
+			break
+		end
+	end
+
 	if tocreate then
-		local count = 0
-
-		for i = 1, tonumber(gs["ActiveCPUs"]) do
-			local f = CF["GetPlayerFaction"](gs, i)
-
-			for itm = 1, #CF["ActNames"][f] do
-				local isduplicate = false
-
-				for j = 1, #arr do
-					if
-						CF["ActDescriptions"][f][itm] == arr[j]["Description"]
-						and CF["ActPresets"][f][itm] == arr[j]["Preset"]
-					then
-						isduplicate = true
-						break
-					end
-				end --]]--
-
-				if
-					CF["ActPowers"][f][itm] > math.random(4, 6)
-					and CF["ActTypes"][f][itm] ~= CF["ActorTypes"].TURRET
-					and math.random() < (0.4 / (count + 1))
-					and not isduplicate
-				then
-					count = count + 1
-					gs["BlackMarket" .. loc .. "Actor" .. count .. "Faction"] = f
-					gs["BlackMarket" .. loc .. "Actor" .. count .. "Index"] = itm
-
-					-- Store descriptions to get rid of duplicates
-					arr[count] = {}
-					arr[count]["Description"] = CF["ActDescriptions"][f][itm]
-					arr[count]["Preset"] = CF["ActPresets"][f][itm]
-				end
-			end
-		end
-		if #CF["ArtActPresets"] > 0 then
-			for itm = 1, #CF["ArtActPresets"] do
-				if gs["UnlockedActBlackprint_" .. CF["ArtActPresets"][itm]] then
-					count = count + 1
-					gs["BlackMarket" .. loc .. "Actor" .. count .. "Faction"] = nil
-					gs["BlackMarket" .. loc .. "Actor" .. count .. "Index"] = itm
-
-					arr[count] = {}
-					arr[count]["Preset"] = CF["ArtActPresets"][itm]
-				end
-			end
-			-- Add random artifact actors into the listing
-			for i = 1, math.random(math.floor(math.sqrt(#CF["ArtActPresets"]))) do
-				local itm = math.random(#CF["ArtActPresets"])
-				local isduplicate = false
-				for j = 1, #arr do
-					if CF["ArtActPresets"][itm] == arr[j]["Preset"] then
-						isduplicate = true
-						break
-					end
-				end
-				if math.random() < (0.5 / (count + 1)) and not isduplicate then
-					count = count + 1
-					gs["BlackMarket" .. loc .. "Actor" .. count .. "Faction"] = nil --PresetMan:GetDataModule(PresetMan:GetModuleID(CF["ArtActModules"][itm])).FriendlyName
-					gs["BlackMarket" .. loc .. "Actor" .. count .. "Index"] = itm
-
-					-- Store descriptions to get rid of duplicates
-					arr[count] = {}
-					arr[count]["Preset"] = CF["ArtActPresets"][itm]
-				end
-			end
-		end
-		gs["BlackMarket" .. loc .. "ActorsCount"] = count
-		gs["BlackMarket" .. loc .. "ActorsLastRefresh"] = gs["Time"]
+		restockBlackMarketActors(gs, loc)
+		count = tonumber(gs["BlackMarket" .. loc .. "ActorsCount"])
 	end
 
 	-- Fill array
-	local count = tonumber(gs["BlackMarket" .. loc .. "ActorsCount"]) and tonumber(
-		gs["BlackMarket" .. loc .. "ActorsCount"]
-	) or 0
-	arr = {}
+	local arr = {}
 
 	for i = 1, count do
-		local ii = #arr + 1
-		arr[ii] = {}
-		local f = gs["BlackMarket" .. loc .. "Actor" .. i .. "Faction"]
-		local itm = tonumber(gs["BlackMarket" .. loc .. "Actor" .. i .. "Index"])
+		local actor = nil
+		local f = gs[prefix .. i .. "Faction"]
+		local index = tonumber(gs[prefix .. i .. "Index"])
+		local fundFactor = math.sqrt(CF["GetPlayerGold"](gs, 0)) * RangeRand(0.75, 1.0) * CF["BlackMarketPriceMultiplier"]
 
-		if f and CF["ActPresets"][f][itm] ~= nil then
-			arr[ii]["Faction"] = f
-			arr[ii]["Index"] = itm
-
-			-- In case somebody will change number of items in faction file check
-			-- every actor
-			arr[ii]["Preset"] = CF["ActPresets"][f][itm]
-			arr[ii]["Module"] = CF["ActModules"][f][itm]
-			arr[ii]["Class"] = CF["ActClasses"][f][itm] or "AHuman"
-
-			arr[ii]["Description"] = CF["ActDescriptions"][f][itm]
-			local price = (math.sqrt(CF["GetPlayerGold"](gs, 0)) * CF["BlackMarketPriceMultiplier"] * RangeRand(0.75, 1.0))
-				+ (CF["ActPrices"][f][itm] * CF["BlackMarketPriceMultiplier"])
-			if price >= 100 then
-				if price >= 1000 then
-					if price >= 10000 then
-						price = math.floor(price * 0.001) * 1000
-					else
-						price = math.floor(price * 0.01) * 100
-					end
-				else
-					price = math.floor(price * 0.1) * 10
-				end
+		if f then
+			if CF["ActPresets"][f] and CF["ActPresets"][f][index] then
+				actor = {}
+				actor["Faction"] = f
+				actor["Preset"] = CF["ActPresets"][f][index]
+				actor["Module"] = CF["ActModules"][f][index]
+				actor["Class"] = CF["ActClasses"][f][index] or "AHuman"
+				actor["Description"] = CF["ActDescriptions"][f][index] or "DESCRIPTION UNAVAILABLE"
+				actor["Price"] = getBlackMarketPrice(CF["ActPrices"][f][index], fundFactor, CF["UnknownActorPrice"])
+				actor["Type"] = CF["ActTypes"][f][index]
 			end
-			arr[ii]["Price"] = math.max(math.floor(price), CF["UnknownActorPrice"])
-			arr[ii]["Type"] = CF["ActTypes"][f][itm]
-		else -- Artifact
-			arr[ii]["Index"] = itm
+		else
+			local class = gs[prefix .. i .. "Class"] or ""
+			local preset = gs[prefix .. i .. "Preset"] or ""
+			local module = gs[prefix .. i .. "Module"] or ""
+			local entity = PresetMan:GetPreset(class, preset, module)
 
-			arr[ii]["Preset"] = CF["ArtActPresets"][itm]
-			arr[ii]["Module"] = CF["ArtActModules"][itm]
+			if entity and IsSceneObject(entity) then
+				entity = ToSceneObject(entity)
+				local multiplier = gs["UnlockedActBlackprint_" .. preset] and 0.5 or 1
+				local price = getBlackMarketPrice(entity:GetGoldValue(0, 1, 1), fundFactor, CF["UnknownActorPrice"])
 
-			arr[ii]["Class"] = CF["ArtActClasses"][itm] and CF["ArtActClasses"][itm] or "AHuman"
-
-			arr[ii]["Description"] = "DESCRIPTION UNAVAILABLE"
-			local multiplier = CF["BlackMarketPriceMultiplier"]
-			if gs["UnlockedActBlackprint_" .. CF["ArtActPresets"][itm]] then
-				multiplier = multiplier * 0.5
+				actor = {}
+				actor["Preset"] = preset
+				actor["Module"] = module
+				actor["Class"] = class
+				actor["Description"] = entity.Description or "DESCRIPTION UNAVAILABLE"
+				actor["Price"] = math.floor(price * multiplier)
 			end
-			local price = (math.sqrt(CF["GetPlayerGold"](gs, 0)) * multiplier * RangeRand(0.75, 1.0))
-				+ (CF["ArtActPrices"][itm] and CF["ArtActPrices"][itm] * multiplier or 2000)
-			if price >= 100 then
-				if price >= 1000 then
-					if price >= 10000 then
-						price = math.floor(price * 0.001) * 1000
-					else
-						price = math.floor(price * 0.01) * 100
-					end
-				else
-					price = math.floor(price * 0.1) * 10
-				end
-			end
-			arr[ii]["Price"] = math.max(math.floor(price), CF["UnknownActorPrice"])
+		end
+
+		if actor then
+			arr[#arr + 1] = actor
 		end
 	end
 

@@ -34,3 +34,24 @@ CF["QuantumItmPresets"][id] = "Medikit"
 CF["QuantumItmModules"][id] = "Base.rte"
 CF["QuantumItmClasses"][id] = "HDFirearm"
 CF["QuantumItmPrices"][id] = 20
+
+local id = "Prosthetic Leg"
+CF["QuantumItems"][#CF["QuantumItems"] + 1] = id
+CF["QuantumItmPresets"][id] = "Prosthetic Leg"
+CF["QuantumItmModules"][id] = CF["ModuleName"]
+CF["QuantumItmClasses"][id] = "HeldDevice"
+CF["QuantumItmPrices"][id] = 60
+
+local id = "Prosthetic Arm"
+CF["QuantumItems"][#CF["QuantumItems"] + 1] = id
+CF["QuantumItmPresets"][id] = "Prosthetic Arm"
+CF["QuantumItmModules"][id] = CF["ModuleName"]
+CF["QuantumItmClasses"][id] = "HeldDevice"
+CF["QuantumItmPrices"][id] = 70
+
+local id = "Replacement Head"
+CF["QuantumItems"][#CF["QuantumItems"] + 1] = id
+CF["QuantumItmPresets"][id] = "Replacement Head"
+CF["QuantumItmModules"][id] = CF["ModuleName"]
+CF["QuantumItmClasses"][id] = "HeldDevice"
+CF["QuantumItmPrices"][id] = 150

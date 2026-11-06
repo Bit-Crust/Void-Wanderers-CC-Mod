@@ -36,6 +36,15 @@ CF["BlackMarketItmPrices"][id] = 500
 CF["BlackMarketItmDescriptions"][id] = "Quit while you're a head!"
 CF["BlackMarketItmTypes"][id] = CF["WeaponTypes"].TOOL
 
+id = id + 1
+CF["BlackMarketItmPresets"][id] = "Control Chip"
+CF["BlackMarketItmModules"][id] = CF["ModuleName"]
+CF["BlackMarketItmClasses"][id] = "HeldDevice"
+CF["BlackMarketItmPrices"][id] = 10000
+CF["BlackMarketItmDescriptions"][id] =
+	"A chip, made specifically for the control of non-vacant actors. Plug this into the recently deceased to alter their allegiances, assuming you have the medical tooling to bring them back."
+CF["BlackMarketItmTypes"][id] = CF["WeaponTypes"].TOOL
+
 -- Customs: probably not up to regulation, but really pretty cool
 
 id = id + 1

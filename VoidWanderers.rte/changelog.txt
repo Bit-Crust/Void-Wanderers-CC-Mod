@@ -114,3 +114,4 @@
 	- black market artifact stock survives changes to installed mods
 	- prosthetic limbs and replacement heads can now be found as quantum schemes
 	- picking up a unit no longer changes its team, so carrying no longer recruits anyone
+	- added the control chip to the black market, which puts a dead unit on your team

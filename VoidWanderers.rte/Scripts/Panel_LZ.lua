@@ -54,6 +54,7 @@ end
 function VoidWanderers:CraftEnteredOrbit(orbitedCraft)
 	print("Halp")
 	if orbitedCraft.PresetName ~= "Fake Drop Ship MK1" and self.GS["Mode"] ~= "Vessel" then
+		-- Only script brains, as a mission's rescue target reaching orbit is that mission's business
 		if orbitedCraft.Team == CF.PlayerTeam and orbitedCraft:HasScript("VoidWanderers.rte/Scripts/Brain.lua") then
 			self.DeployedActors = {}
 
@@ -291,7 +292,7 @@ function VoidWanderers:ProcessLZControlPanelUI()
 								safeUnits[#safeUnits + 1] = actor
 							else
 								unsafeUnits[#unsafeUnits + 1] = actor
-								if actor:HasScript("VoidWanderers.rte/Scripts/Brain.lua") then
+								if CF["IsBrain"](actor) then
 									brainUnsafe = brainUnsafe + 1
 								end
 							end

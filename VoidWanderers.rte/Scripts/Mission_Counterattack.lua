@@ -218,7 +218,7 @@ function VoidWanderers:MissionUpdate()
 			local count = 0
 
 			for actor in MovableMan.Actors do
-				if actor.Team == CF["CPUTeam"] and not actor:HasScript("VoidWanderers.rte/Scripts/Brain.lua") then
+				if actor.Team == CF["CPUTeam"] and not CF["IsBrain"](actor) then
 					CF["HuntForActors"](actor, CF["PlayerTeam"])
 				end
 			end

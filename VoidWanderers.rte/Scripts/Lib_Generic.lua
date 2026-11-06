@@ -1443,6 +1443,7 @@ CF.HuntForActors = function(hunter, targetTeam)
 					closestDistance = dist.Magnitude
 					closestActor = target
 				end
+				-- Only script brains, as hunting a mission's rescue target would make it a different mission
 				if target:HasScript("VoidWanderers.rte/Scripts/Brain.lua") then
 					table.insert(brains, target)
 				end
@@ -1615,7 +1616,7 @@ CF["CountActors"] = function(team)
 		if
 			actor.Team == team
 			and (actor.ClassName == "AHuman" or actor.ClassName == "ACrab")
-			and not (actor:HasScript("VoidWanderers.rte/Scripts/Brain.lua") or actor:NumberValueExists("VW_Ally"))
+			and not (CF["IsBrain"](actor) or actor:NumberValueExists("VW_Ally"))
 		then
 			c = c + 1
 		end

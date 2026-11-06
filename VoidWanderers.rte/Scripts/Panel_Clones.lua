@@ -883,7 +883,7 @@ function VoidWanderers:ProcessClonesControlPanelUI()
 						moving = false
 					end
 
-					if not moving and actor.PresetName ~= "Clones Control Panel" and not actor:HasScript("VoidWanderers.rte/Scripts/Brain.lua") then
+					if not moving and actor.PresetName ~= "Clones Control Panel" and not CF["IsBrain"](actor) then
 						toresettimer = false
 
 						if actorDead then

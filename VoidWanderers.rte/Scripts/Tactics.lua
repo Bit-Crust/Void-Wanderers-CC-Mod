@@ -2950,6 +2950,7 @@ end
 -- Whether an actor is the brain or otherwise prestigious
 -----------------------------------------------------------------------------------------
 function VoidWanderers:IsCommander(actor)
+	-- Only script brains, as a mission's rescue target can't rescue itself or claim rewards
 	return (actor:HasScript("VoidWanderers.rte/Scripts/Brain.lua") or actor:GetNumberValue("VW_Prestige") ~= 0)
 end
 -----------------------------------------------------------------------------------------
@@ -2958,7 +2959,7 @@ end
 function VoidWanderers:IsPlayerUnit(actor)
 	return (IsAHuman(actor) or IsACrab(actor))
 		and actor.Team == CF.PlayerTeam
-		and not (actor:HasScript("VoidWanderers.rte/Scripts/Brain.lua") or self:IsAlly(actor))
+		and not (CF.IsBrain(actor) or self:IsAlly(actor))
 end
 -----------------------------------------------------------------------------------------
 --

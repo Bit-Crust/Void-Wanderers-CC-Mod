@@ -22,7 +22,7 @@ function VoidWanderers:AmbientUpdate()
 					if self.Time >= self.AmbientSmokesNextHealthDamage then
 						self.AmbientSmokesNextHealthDamage = self.Time + 1
 
-						if IsActor(mo) and not actor:IsInGroup("Brains") then
+						if IsActor(mo) then
 							local actor = ToActor(mo)
 							actor.Health = actor.Health - math.ceil(50 / math.sqrt(1 + math.abs(actor.Mass + actor.Material.StructuralIntegrity)))
 							-- Push actor outwards from the ship

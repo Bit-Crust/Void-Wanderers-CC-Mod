@@ -117,3 +117,4 @@
 	- added the control chip to the black market, which puts a dead unit on your team, as long as it still has a head
 	- giving a prosthetic head to a dead unit puts it on your team
 	- brains refuse both, and aren't polite about it, since a brain's head can't be replaced
+	- brains suffocate outside the ship like everyone else
